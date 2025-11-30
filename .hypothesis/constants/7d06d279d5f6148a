@@ -1,0 +1,4 @@
+# file: /home/sean/code/streamlit_user_management/src/auth/guard.py
+# hypothesis_version: 6.148.3
+
+['### Welcome', 'Access Denied', 'FinOps AI Dashboard', 'Return to Dashboard', 'User not logged in', 'primary', 'protected_feature']

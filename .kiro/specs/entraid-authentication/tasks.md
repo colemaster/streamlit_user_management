@@ -1,0 +1,134 @@
+# Implementation Plan
+
+- [x] 1. Set up authentication module structure and configuration
+  - [x] 1.1 Create auth module directory structure (`src/auth/`)
+    - Create `src/auth/__init__.py`, `config.py`, `claims.py`, `permissions.py`, `graph_client.py`, `guard.py`, `logging.py`
+    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+  - [x] 1.2 Implement PermissionLevel enum and AuthConfig dataclass
+    - Define `PermissionLevel` IntEnum with VIEWER=1, ANALYST=2, ADMIN=3
+    - Define `AuthConfig` dataclass with all required fields
+    - Implement `from_secrets()` class method to load from st.secrets
+    - Implement `validate()` method to check required fields
+    - Implement `build_metadata_url()` helper function
+    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+  - [x] 1.3 Write property tests for configuration module
+    - **Property 1: Configuration Loading Completeness**
+    - **Property 2: Missing Configuration Detection**
+    - **Property 3: Metadata URL Format**
+    - **Property 4: Group Mapping Storage**
+    - **Validates: Requirements 1.1, 1.2, 1.3, 1.4**
+
+- [x] 2. Implement user claims extraction
+  - [x] 2.1 Implement UserClaims dataclass and extraction functions
+    - Define `UserClaims` dataclass with oid, email, name, preferred_username, tenant_id, exp
+    - Implement `from_st_user()` class method
+    - Implement `is_expired()` method for token expiration checking
+    - Implement `extract_user_claims()` function that checks login status first
+    - Implement `check_login_status()` function
+    - _Requirements: 2.3, 3.1, 3.2, 3.4_
+  - [x] 2.2 Write property tests for claims module
+    - **Property 5: User Claims Extraction**
+    - **Property 6: Login Status Verification**
+    - **Property 7: Token Expiration Check**
+    - **Validates: Requirements 2.3, 3.1, 3.2, 3.4**
+
+- [ ] 3. Implement permission service and mapping
+  - [x] 3.1 Implement UserPermission dataclass with serialization
+    - Define `UserPermission` dataclass with user_oid, permission_level, group_oids
+    - Implement `to_dict()` method for session storage serialization
+    - Implement `from_dict()` class method for deserialization
+    - _Requirements: 3.5, 3.6, 5.5_
+  - [ ] 3.2 Write property test for permission data round-trip
+    - **Property 8: Permission Data Round-Trip**
+    - **Validates: Requirements 3.5, 3.6**
+  - [x] 3.3 Implement PermissionService class
+    - Implement `map_groups_to_permission()` method
+    - Implement `resolve_highest_permission()` method
+    - Implement `cache_permission()` and `get_cached_permission()` methods
+    - Implement `has_permission()` and `get_current_permission()` helper functions
+    - _Requirements: 4.2, 4.3, 4.4, 5.5, 6.1, 6.2_
+  - [ ] 3.4 Write property tests for permission service
+    - **Property 9: Group to Permission Mapping**
+    - **Property 10: Highest Permission Resolution**
+    - **Property 11: Permission Caching**
+    - **Property 12: Permission Level Check**
+    - **Validates: Requirements 4.2, 4.3, 4.4, 5.5, 6.1, 6.2**
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 5. Implement Microsoft Graph API client
+  - [x] 5.1 Implement GraphAPIClient class
+    - Implement `__init__()` with client credentials
+    - Implement `_get_access_token()` using client credentials flow
+    - Implement `get_user_groups()` to fetch group OIDs for a user
+    - Add error handling for API failures
+    - _Requirements: 4.1_
+  - [x] 5.2 Write unit tests for Graph API client
+    - Test token acquisition with mocked responses
+    - Test group retrieval with mocked responses
+    - Test error handling scenarios
+    - _Requirements: 4.1_
+
+- [ ] 6. Implement audit logging
+  - [x] 6.1 Implement logging functions
+    - Implement `log_auth_event()` for successful authentication
+    - Implement `log_auth_failure()` for failed authentication (sanitized)
+    - Implement `log_logout()` for logout events
+    - Implement `log_access_denied()` for permission denials
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+  - [ ] 6.2 Write property tests for logging
+    - **Property 13: Auth Event Log Content**
+    - **Property 14: Log Sanitization**
+    - **Property 15: Logout Log Content**
+    - **Property 16: Access Denied Log Content**
+    - **Validates: Requirements 7.1, 7.2, 7.3, 7.4**
+
+- [ ] 7. Implement AuthGuard and integrate with application
+  - [x] 7.1 Implement AuthGuard class
+    - Implement `require_auth()` method using st.user.is_logged_in
+    - Implement `require_permission()` method
+    - Implement `login()` and `logout()` methods wrapping st.login/st.logout
+    - Implement `render_login_page()` with Microsoft login button
+    - Implement `render_access_denied()` for permission errors
+    - _Requirements: 2.1, 2.2, 2.4, 2.5, 6.3_
+  - [x] 7.2 Create secrets.toml template
+    - Create `.streamlit/secrets.toml.example` with all required fields
+    - Document configuration options
+    - _Requirements: 1.1_
+
+- [x] 8. Integrate authentication into existing application
+  - [x] 8.1 Update streamlit_main.py entry point
+    - Import and initialize AuthGuard
+    - Add authentication check before rendering pages
+    - Handle login/logout flow
+    - _Requirements: 2.1, 2.4, 5.1, 5.2, 5.3, 5.4_
+  - [x] 8.2 Update pages.py to use new authentication
+    - Replace existing AuthManager with AuthGuard
+    - Update login page to use st.login()
+    - Update logout to use st.logout()
+    - Remove old cookie-based authentication code
+    - _Requirements: 2.1, 2.2, 2.4, 2.5_
+  - [x] 8.3 Add permission checks to protected features
+    - Add permission checks to dashboard access
+    - Add permission checks to admin features (if any)
+    - Display appropriate access denied messages
+    - _Requirements: 6.2, 6.3_
+
+- [ ] 9. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [-] 10. Update dependencies and documentation
+  - [x] 10.1 Update requirements.txt
+    - Add `httpx` for async HTTP requests to Graph API
+    - Add `hypothesis` for property-based testing
+    - Ensure Streamlit version >= 1.42.0
+    - _Requirements: N/A (infrastructure)_
+  - [ ] 10.2 Update README with authentication setup instructions
+    - Document Entra ID app registration steps
+    - Document secrets.toml configuration
+    - Document group-to-permission mapping setup
+    - _Requirements: N/A (documentation)_
+
+- [ ] 11. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.

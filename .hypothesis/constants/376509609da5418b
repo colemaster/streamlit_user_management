@@ -1,0 +1,4 @@
+# file: /home/sean/code/streamlit_user_management/src/auth/claims.py
+# hypothesis_version: 6.148.3
+
+['UserClaims', 'email', 'exp', 'is_logged_in', 'name', 'oid', 'preferred_username', 'tid']

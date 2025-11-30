@@ -1,13 +1,51 @@
 """Entry point for the Streamlit application"""
 
-
+import asyncio
 import streamlit as st
 from src.ui.pages import render
 from src.database.database import Base, engine
+from src.auth.guard import AuthGuard
+from src.auth.config import ConfigurationError
 
+# Initialize database
 Base.metadata.create_all(engine)
 
-if "page" not in st.session_state:
-    st.session_state["page"] = "login"
+# Initialize authentication guard
+try:
+    auth_guard = AuthGuard()
+except ConfigurationError as e:
+    st.error(f"Configuration Error: {e}")
+    st.stop()
 
-render()
+# Add Logo (New in 1.35+)
+st.logo(
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Streamlit_Logo.jpg/520px-Streamlit_Logo.jpg",
+    icon_image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Streamlit_Logo.jpg/520px-Streamlit_Logo.jpg",
+)
+
+# Check authentication before rendering pages
+if auth_guard.require_auth():
+    # Initialize user permissions if not already cached
+    if "permissions_initialized" not in st.session_state:
+        with st.status("Initializing User Permissions...", expanded=True) as status:
+            try:
+                st.write("Fetching user groups from Entra ID...")
+                permission = asyncio.run(auth_guard.initialize_user_permission())
+                if permission:
+                    st.session_state["permissions_initialized"] = True
+                    st.write("Permissions mapped successfully.")
+                    status.update(
+                        label="Permissions Initialized",
+                        state="complete",
+                        expanded=False,
+                    )
+            except Exception as e:
+                status.update(
+                    label="Permission Initialization Failed",
+                    state="error",
+                    expanded=True,
+                )
+                st.error(f"Error initializing permissions: {e}")
+
+    # Render the main application
+    render(auth_guard)

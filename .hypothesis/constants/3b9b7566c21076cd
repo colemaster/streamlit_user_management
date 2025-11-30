@@ -1,0 +1,4 @@
+# file: /home/sean/code/streamlit_user_management/src/auth/permissions.py
+# hypothesis_version: 6.148.3
+
+['GraphAPIClient', 'UserPermission', 'group_oids', 'permission_level', 'user_oid', 'user_permission']

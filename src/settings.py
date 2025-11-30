@@ -30,7 +30,7 @@ class DatabaseConfig:
         Returns:
             str: Complete database connection string
         """
-        return f"mysql+mysqlconnector://{cls.USERNAME}:{cls.PASSWORD}@{cls.HOST}:{cls.PORT}/{cls.DATABASE}"
+        return "sqlite:///./user_management.db"
 
 
 class JWTConfig:

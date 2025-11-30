@@ -1,0 +1,4 @@
+# file: /home/sean/code/streamlit_user_management/src/auth/graph_client.py
+# hypothesis_version: 6.148.3
+
+['@odata.type', 'Authorization', 'Content-Type', 'access_token', 'application/json', 'client_credentials', 'client_id', 'client_secret', 'grant_type', 'id', 'scope', 'value']

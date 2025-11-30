@@ -1,0 +1,4 @@
+# file: /home/sean/code/streamlit_user_management/src/auth/config.py
+# hypothesis_version: 6.148.3
+
+['AuthConfig', 'admin', 'analyst', 'auth', 'client_id', 'client_secret', 'cookie_secret', 'group_mappings', 'redirect_uri', 'server_metadata_url', 'tenant_id', 'viewer']
