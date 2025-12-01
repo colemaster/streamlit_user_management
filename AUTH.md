@@ -118,7 +118,7 @@ Mappings are defined in `secrets.toml`:
 > **Entra ID Token Limits & "Overage"**
 >
 > Entra ID has limits on the number of groups emitted in a token:
-> -   **JWT**: Max 200 groups.
+> -   **JWT/OIDC**: Max 200 groups.
 > -   **SAML**: Max 150 groups.
 > -   **Implicit Flow**: Max 6 groups.
 >
@@ -126,6 +126,49 @@ Mappings are defined in `secrets.toml`:
 >
 > **Our Solution**:
 > To ensure reliability regardless of user group count, this application **always** fetches group memberships directly from the **Microsoft Graph API** (`/users/{oid}/memberOf`) using the application's Client Credentials. This bypasses the token limits entirely and ensures we get the complete list of groups.
+
+### Service Limits & Throttling
+
+When using MSAL, JWT tokens, and Microsoft Graph API for group membership lookups, be aware of the following service limits:
+
+#### Microsoft Graph API Limits
+- **Global limit**: 130,000 requests per 10 seconds per app across all tenants
+- **Identity and Access Service limits** (per app + tenant pair):
+  - Small tenant (under 50 users): 3,500 Resource Units per 10 seconds
+  - Medium tenant (50-500 users): 5,000 Resource Units per 10 seconds
+  - Large tenant (above 500 users): 8,000 Resource Units per 10 seconds
+- **Group membership lookup cost**: `/users/{id}/memberOf` endpoint costs 2 Resource Units
+  - Using `$select` decreases cost by 1 Resource Unit
+  - Using `$top` with value < 20 decreases cost by 1 Resource Unit
+  - Using `$expand` increases cost by 1 Resource Unit
+
+#### JWT Token Limits
+- **Group memberships in JWT tokens**: Up to 200 groups (including nested)
+- **Group memberships in SAML tokens**: Up to 150 groups (including nested)
+- If user belongs to more than these limits, groups claim is omitted and overage claim is sent instead
+- **Kerberos**: Limit of 1,010 groups per token
+- **Conditional Access**: Supports up to 4,096 group memberships per user for policy evaluation
+- **General group membership**: Max 2,048 groups (direct and nested) before access may be blocked
+- **SharePoint Online**: Max 2,047 security groups per user
+- **HTTP Header Size**: Most web servers and proxies support up to 8KB for headers (including Authorization header containing JWT)
+- **Browser Cookie Size**: Most browsers limit cookie size to 4KB, which affects JWT storage in cookies
+- **URL Length**: If JWT is passed in URL (not recommended), URLs should be kept under 2048 characters for compatibility
+
+#### JWT Token Management Best Practices
+- **Keep Payload Lean**: Minimize the amount of data stored in JWT payload to keep token size small
+- **Short Expiration Times**: Use short-lived access tokens (typically 15-60 minutes) to reduce security exposure
+- **Token Refresh**: Implement proper refresh token rotation to maintain user sessions without re-authentication
+- **Secure Storage**: Store JWTs securely - in httpOnly cookies with Secure and SameSite attributes, or in memory/session storage for SPA scenarios
+- **Proper Validation**: Always validate token signature, expiration (exp), not before (nbf), and issuer (iss) claims
+- **Token Revocation**: Implement token blacklisting or short expiration times to handle token revocation scenarios
+- **Avoid Sensitive Data**: Never include sensitive information like passwords, PII, or secrets in JWT payload
+- **Token Rotation**: Use one-time-use refresh tokens that generate new tokens during each refresh
+- **HTTPS Only**: Always transmit JWTs over HTTPS to prevent interception
+
+#### MSAL Library
+- MSAL itself doesn't impose specific rate limits - limits are enforced by the Microsoft identity platform
+- MSAL handles token caching and refresh automatically to minimize API calls
+- Proper implementation should consider the service limits mentioned above
 
 ### Debugging
 -   **Admin Dashboard**: Users with `ADMIN` role can view the "Admin Dashboard" to see raw token claims and group memberships.

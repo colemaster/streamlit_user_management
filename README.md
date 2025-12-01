@@ -9,29 +9,39 @@ This is a modular and scalable user management system built with **Streamlit**, 
 streamlit_user_management/
 │
 ├── src/
+│   ├── auth/                 # Authentication module with Entra ID integration
+│   │   ├── __init__.py
+│   │   ├── claims.py         # User claims extraction and validation
+│   │   ├── config.py         # Authentication configuration and permission levels
+│   │   ├── graph_client.py   # Microsoft Graph API client for group membership
+│   │   ├── guard.py          # Main authentication guard and flow controller
+│   │   ├── logging.py        # Authentication event logging
+│   │   ├── msal_guard.py     # Legacy MSAL-based authentication (deprecated)
+│   │   └── permissions.py    # Permission service and level management
+│   │
 │   ├── database/
 │   │   ├── __init__.py
 │   │   ├── database.py       # Database connection and setup
 │   │   └── models.py         # SQLAlchemy models
 │   │
-│   ├── ui/
-│   │   ├── __init__.py
-│   │   ├── components.py     # Reusable UI components
-│   │   ├── managers.py       # Authentication and session logic
-│   │   ├── pages.py          # Login, register, and dashboard pages
-│   │   ├── admin.py          # Admin Dashboard component
-│   │   ├── chat.py           # Chatbot interface logic
-│   │   ├── styles.py         # Custom CSS for BHP theme
-│   │   └── services.py       # Backend services used by the UI
-│   │
 │   ├── finops/
 │   │   ├── engine.py         # FinOps chatbot logic
 │   │   └── data.py           # Mock data for chatbot
 │   │
-│   ├── settings.py           # Environment configuration and constants
-│   ├── .env                  # Actual environment variables (not committed)
-│   ├── example.env           # Example .env file
-│   
+│   ├── ui/
+│   │   ├── __init__.py
+│   │   ├── admin.py          # Admin Dashboard component
+│   │   ├── chat.py           # Chatbot interface logic
+│   │   ├── components.py     # Reusable UI components
+│   │   ├── dashboard.py      # Dashboard interface
+│   │   ├── managers.py       # Session and state management
+│   │   ├── pages.py          # Main application routing and layout
+│   │   ├── services.py       # Backend services used by the UI
+│   │   └── styles.py         # Custom CSS for BHP theme
+│   │
+│   └── settings.py           # Environment configuration and constants
+│
+├── .streamlit/secrets.toml   # Authentication secrets (not committed)
 ├── tests/                    # End-to-End tests
 ├── streamlit_main.py         # Entry point for the Streamlit app
 ├── requirements.txt          # Required Python packages
@@ -46,9 +56,12 @@ streamlit_user_management/
 - ✅ **BHP Themed UI**: Modern, clean interface with BHP Orange branding.
 - ✅ **FinOps Chatbot**: Intelligent assistant with streaming responses and "thinking" indicators.
 - ✅ **Admin Dashboard**: View user access, group memberships, and authentication logs.
-- ✅ **Microsoft Entra ID Authentication**: Enterprise SSO with group-based permissions (Native & MSAL).
-- ✅ **Role-Based Access Control**: Map Entra ID groups to application permission levels.
+- ✅ **Microsoft Entra ID Authentication**: Enterprise SSO with group-based permissions (Streamlit Native Auth).
+- ✅ **Role-Based Access Control**: Map Entra ID groups to application permission levels with Viewer/Analyst/Admin tiers.
 - ✅ **SQLite Database**: Zero-config local development database.
+- ✅ **Token-based Authentication**: JWT token validation and management with automatic logout on token expiration.
+- ✅ **Microsoft Graph API Integration**: Retrieves user's group memberships for permission mapping.
+- ✅ **Event Logging**: Tracks authentication events, failures, and access attempts.
 
 ## Architecture
 
@@ -59,14 +72,18 @@ graph TD
     Streamlit -->|Query| GraphAPI[Microsoft Graph API]
     Streamlit -->|Store| SQLite[(SQLite DB)]
     Streamlit -->|Chat| FinOpsEngine[FinOps AI Engine]
-    
+
     subgraph "Security Layer"
-        AuthGuard[AuthGuard / MSAL]
-        RBAC[Permission Service]
+        AuthGuard[AuthGuard / Streamlit Native Auth]
+        Claims[Claims Handler]
+        Permissions[Permission Service]
+        GraphClient[Graph API Client]
     end
-    
+
     Streamlit --> AuthGuard
-    AuthGuard --> RBAC
+    AuthGuard --> Claims
+    AuthGuard --> Permissions
+    Permissions --> GraphClient
 ```
 
 > [!NOTE]
@@ -211,7 +228,7 @@ client_secret = "your-client-secret-value"
 tenant_id = "your-directory-tenant-id"
 
 # Redirect URI (must match what you configured in Entra ID)
-redirect_uri = "http://localhost:8501/oauth2callback"
+redirect_uri = "http://localhost:8501/"
 
 # Cookie secret for session management (generate a strong random string)
 cookie_secret = "your-strong-random-secret-at-least-32-chars"
