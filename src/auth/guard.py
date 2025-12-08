@@ -5,20 +5,19 @@ Main authentication flow controller.
 """
 
 import streamlit as st
+import os
 from typing import Optional
 
 from src.auth.config import (
     load_auth_config,
     PermissionLevel,
     AuthConfig,
-    ConfigurationError,
 )
-from src.auth.claims import extract_user_claims, check_login_status, UserClaims
+from src.auth.claims import extract_user_claims, check_login_status
 from src.auth.permissions import (
     PermissionService,
     UserPermission,
     has_permission,
-    get_current_permission,
     SESSION_PERMISSION_KEY,
 )
 from src.auth.graph_client import GraphAPIClient
@@ -59,18 +58,26 @@ class AuthGuard:
         This is the main gatekeeper. It checks if the user is logged in via
         Streamlit's native authentication mechanism (st.user).
 
+        Flow:
+        1. Check if st.user is populated (user is logged in).
+        2. If not, show the login page (which triggers st.login()).
+        3. If logged in, validate that the token hasn't expired.
+
         Returns:
             True if user is authenticated, False otherwise
         """
         # 1. Check if Streamlit has populated st.user (Native Auth)
+        # This happens automatically after a successful OAuth flow.
         if not check_login_status():
             # 2. If not, trigger the login flow (Redirect to Microsoft)
             self.render_login_page()
             return False
 
-        # Check for expired token
+        # 3. Check for expired token
+        # Even if st.user exists, the underlying token might be stale.
         claims = extract_user_claims()
         if claims and claims.is_expired():
+            st.warning("Session expired. Please sign in again.")
             self.logout()
             self.render_login_page()
             return False
@@ -101,6 +108,7 @@ class AuthGuard:
 
     def login(self) -> None:
         """Initiate login flow."""
+        st.toast("Redirecting to Microsoft Login...", icon="🔒")
         st.login()
 
     def logout(self) -> None:
@@ -113,6 +121,7 @@ class AuthGuard:
         if SESSION_PERMISSION_KEY in st.session_state:
             del st.session_state[SESSION_PERMISSION_KEY]
 
+        st.toast("Logging out...", icon="👋")
         st.logout()
 
     def render_login_page(self) -> None:
@@ -120,6 +129,12 @@ class AuthGuard:
         st.title("FinOps AI Dashboard")
         st.markdown("### Welcome")
         st.markdown("Please sign in with your organization account to continue.")
+
+        st.info(
+            "**Why sign in?**\n"
+            "This application handles sensitive financial data. "
+            "Authentication ensures you have the correct permissions to view cost reports and budgets."
+        )
 
         if st.button("Sign in with Microsoft", type="primary"):
             self.login()
@@ -133,14 +148,19 @@ class AuthGuard:
         Args:
             required: The permission level that was required
         """
-        st.error("Access Denied")
-        st.markdown(
-            f"You do not have permission to access this feature. "
-            f"Required permission level: **{required.name}**"
-        )
-        st.markdown(
-            "Please contact your administrator if you believe this is an error."
-        )
+        st.error(f"Access Denied: {required.name} role required")
+
+        with st.container(border=True):
+            st.markdown(
+                f"""
+                ### 🚧 Authorization Required
+                You currently do not have the **{required.name}** permission level required to access this feature.
+                
+                **What can you do?**
+                1. **Check your role:** Go to the Admin Dashboard to see your current permissions.
+                2. **Request Access:** Contact the FinOps team or your IT administrator to request the `{required.name}` role for your account.
+                """
+            )
 
         if st.button("Return to Dashboard"):
             st.rerun()
@@ -161,10 +181,20 @@ class AuthGuard:
         if cached and cached.user_oid == claims.oid:
             return cached
 
-        # Determine permission from groups
-        # This calls Microsoft Graph API to get the user's group memberships
-        # and maps them to an application permission level (VIEWER, ANALYST, ADMIN)
-        permission = await self.permission_service.determine_user_permission(claims.oid)
+        if os.getenv("NO_AUTH"):
+            # Mock Admin Permission
+            permission = UserPermission(
+                user_oid=claims.oid,
+                permission_level=PermissionLevel.ADMIN,
+                group_oids=["mock-admin-group"],
+            )
+        else:
+            # Determine permission from groups
+            # This calls Microsoft Graph API to get the user's group memberships
+            # and maps them to an application permission level (VIEWER, ANALYST, ADMIN)
+            permission = await self.permission_service.determine_user_permission(
+                claims.oid
+            )
 
         # Cache and log
         self.permission_service.cache_permission(permission)

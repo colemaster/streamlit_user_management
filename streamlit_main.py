@@ -1,6 +1,7 @@
 """Entry point for the Streamlit application"""
 
 import asyncio
+import os
 import streamlit as st
 from src.ui.pages import render
 from src.database.database import Base, engine
@@ -17,10 +18,13 @@ except ConfigurationError as e:
     st.error(f"Configuration Error: {e}")
     st.stop()
 
+if os.getenv("NO_AUTH"):
+    st.toast("⚠️ Running in NO_AUTH Mode (Mock Admin)", icon="🛡️")
+
 # Add Logo (New in 1.35+)
 st.logo(
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Streamlit_Logo.jpg/520px-Streamlit_Logo.jpg",
-    icon_image="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Streamlit_Logo.jpg/520px-Streamlit_Logo.jpg",
+    "/home/sean/.gemini/antigravity/brain/28584ee8-5cc9-47b9-900e-3117bed716a2/bhp_mining_logo_dark_1765185101973.png",
+    icon_image="/home/sean/.gemini/antigravity/brain/28584ee8-5cc9-47b9-900e-3117bed716a2/bhp_mining_logo_dark_1765185101973.png",
 )
 
 # Check authentication before rendering pages

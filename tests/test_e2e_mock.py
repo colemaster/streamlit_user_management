@@ -69,7 +69,8 @@ def test_viewer_access(mock_auth_guard):
         patch("src.auth.guard.extract_user_claims", return_value=MOCK_VIEWER),
         patch("src.ui.pages.extract_user_claims", return_value=MOCK_VIEWER),
         patch(
-            "src.auth.guard.get_current_permission", return_value=PermissionLevel.VIEWER
+            "src.auth.permissions.get_current_permission",
+            return_value=PermissionLevel.VIEWER,
         ),
         patch(
             "src.ui.pages.get_current_permission", return_value=PermissionLevel.VIEWER
@@ -103,13 +104,11 @@ def test_admin_access(mock_auth_guard):
         patch("src.ui.pages.extract_user_claims", return_value=MOCK_ADMIN),
         patch("src.ui.admin.extract_user_claims", return_value=MOCK_ADMIN),
         patch(
-            "src.auth.guard.get_current_permission", return_value=PermissionLevel.ADMIN
+            "src.auth.permissions.get_current_permission",
+            return_value=PermissionLevel.ADMIN,
         ),
         patch(
             "src.ui.pages.get_current_permission", return_value=PermissionLevel.ADMIN
-        ),
-        patch(
-            "src.ui.admin.get_current_permission", return_value=PermissionLevel.ADMIN
         ),
     ):
         # Mock permission initialization to return ADMIN permission

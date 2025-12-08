@@ -6,6 +6,7 @@ This project is a **Streamlit-based User Management System** tailored for **FinO
 ## Tech Stack
 - **Frontend/App Framework:** Streamlit
 - **Language:** Python 3.x
+- **Dependency Management:** uv
 - **Authentication:** Microsoft Entra ID (via `httpx` & Microsoft Graph API), OAuth2, MSAL (Optional)
 - **Database:** SQLite (SQLAlchemy ORM)
 - **Data/Viz:** Pandas, Plotly
@@ -46,6 +47,8 @@ This project is a **Streamlit-based User Management System** tailored for **FinO
 - `data.py`: Data sources or mock data for the FinOps engine.
 
 #### Configuration
+- `pyproject.toml`: Project configuration and dependencies (managed by uv).
+- `uv.lock`: Locked dependencies (managed by uv).
 - `src/settings.py`: Application-wide settings and constants.
 - `src/example.env`: Template for environment variables.
 - `.streamlit/secrets.toml`: (Not committed) Contains sensitive auth credentials and group mappings.
@@ -58,7 +61,7 @@ This project is a **Streamlit-based User Management System** tailored for **FinO
 ### Running the App
 Always prefer running via `streamlit_main.py` to ensure the full context (Auth + DB) is loaded:
 ```bash
-streamlit run streamlit_main.py
+uv run streamlit run streamlit_main.py
 ```
 
 ### Authentication Workflow
@@ -69,10 +72,18 @@ streamlit run streamlit_main.py
 5. **Permission Sync**: `AuthGuard` fetches user groups from MS Graph and maps them to roles defined in `secrets.toml`.
 
 ### Testing
-- **End-to-End**: `pytest tests/` (Includes Playwright tests for UI interactions).
-- **Unit**: `pytest` can also run unit tests for logic in `src/`.
+- **End-to-End**: `uv run pytest tests/` (Includes Playwright tests for UI interactions).
+- **Unit**: `uv run pytest` can also run unit tests for logic in `src/`.
 
 ## Key Context for AI Assistant
 - **State Management**: Heavily relies on `st.session_state`. Be careful when clearing or modifying state keys like `messages`, `user`, or `permissions_initialized`.
 - **Async**: Some auth operations (like Graph API calls) are async (`asyncio.run` is used in sync contexts like Streamlit).
 - **Secrets**: Auth config is in `secrets.toml`. Do not hardcode credentials in code.
+
+---
+
+## AI Assistant Environment Context
+- **Current Date:** Thursday, December 4, 2025
+- **Operating System:** linux
+- **Project Temporary Directory:** /home/sean/.gemini/tmp/bd966495fc76a517dfc4826915106347657066774fff26c008d5ad4475f0dde4
+- **Current Working Directory:** /home/sean/code/streamlit_user_management

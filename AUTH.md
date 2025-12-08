@@ -57,6 +57,15 @@ sequenceDiagram
     App-->>User: Render Dashboard
 ```
 
+### User Feedback Enhancements
+
+To improve the user experience during the authentication process, the following feedback mechanisms have been implemented in `src/auth/guard.py`:
+
+-   **Login Redirection Toast**: When the user initiates a login, a toast message "Redirecting to Microsoft Login..." appears, providing immediate feedback before the browser redirection.
+-   **Login Page Information**: The login page (`render_login_page`) now includes an `st.info` message explaining the necessity of signing in for accessing sensitive financial data.
+-   **Logout Confirmation**: A toast message "Logging out..." confirms the user's logout action.
+-   **Enhanced Access Denied**: The `render_access_denied` message has been made more user-friendly and actionable, clearly stating the required permission level and providing guidance on how to check current roles and request access.
+
 ## 2. MSAL Authentication (Optional)
 
 This flow uses `msal` to handle the OAuth2 Authorization Code Flow manually. This is useful if you need more control over tokens or if Streamlit's native auth is insufficient (e.g., for complex claim handling).
@@ -171,5 +180,33 @@ When using MSAL, JWT tokens, and Microsoft Graph API for group membership lookup
 - Proper implementation should consider the service limits mentioned above
 
 ### Debugging
--   **Admin Dashboard**: Users with `ADMIN` role can view the "Admin Dashboard" to see raw token claims and group memberships.
+-   **Admin Dashboard**: Users with `ADMIN` role can view the "Admin Dashboard" to see Identity Claims, Raw Token Claims, and Group Memberships.
 -   **Logs**: Auth events are logged to the console and visible in the Admin Dashboard.
+
+## Connecting to External APIs
+
+If your application needs to call downstream APIs (e.g., a FastAPI backend or Azure Function) on behalf of the logged-in user, you can reuse the authentication token.
+
+### Helper Module: `src.auth.external`
+
+We provide a helper to create an authenticated `httpx.Client`:
+
+```python
+from src.auth.external import get_authenticated_client
+
+try:
+    # Create a client pre-configured with "Authorization: Bearer <token>"
+    with get_authenticated_client(base_url="https://api.my-finops-service.com") as client:
+        response = client.get("/api/v1/costs")
+        data = response.json()
+        st.json(data)
+except ValueError as e:
+    st.error(f"Auth Error: {e}")
+except Exception as e:
+    st.error(f"API Error: {e}")
+```
+
+> [!NOTE]
+> **Token Availability**:
+> - **Streamlit Native Auth**: The `access_token` field must be present in the `st.user` dict. This depends on your identity provider configuration. Often, the ID token is used as a Bearer token for same-tenant services.
+> - **MSAL Auth**: The `MSALAuthGuard` explicitly stores the access token, making this flow robust for external calls.
