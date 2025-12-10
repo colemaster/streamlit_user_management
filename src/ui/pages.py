@@ -3,56 +3,72 @@
 import streamlit as st
 from src.auth.guard import AuthGuard
 from src.auth.claims import extract_user_claims
-from src.auth.permissions import get_current_permission
+from src.auth.permissions import get_current_permission, PermissionLevel
 
 
 def render(auth_guard: AuthGuard):
     """
-    Render the main application with Entra ID authentication.
-
-    Args:
-        auth_guard: Initialized AuthGuard instance
+    Render the main application navigation and routing.
     """
-    # Get user claims
     claims = extract_user_claims()
+    if not claims:
+        st.error("Authentication Context Missing")
+        return
 
-    # Sidebar with user info and logout
-    if claims:
-        # Get permission level (needed for navigation and display)
-        permission = get_current_permission()
+    permission = get_current_permission()
 
-        # User Profile Popover (New in Streamlit 1.29+, enhanced in 1.51)
-        with st.sidebar.popover(
-            f"👋 {claims.name or claims.email}", use_container_width=True
-        ):
-            st.markdown(f"**Email:** {claims.email}")
+    # --------------------------------------------------------------------------
+    #                                SIDEBAR
+    # --------------------------------------------------------------------------
+    with st.sidebar:
+        st.markdown('<div style="padding: 1rem 0;">', unsafe_allow_html=True)
 
-            # Show permission level
-            if permission:
-                st.info(f"🔑 Permission: {permission.name}")
+        # User Profile
+        with st.container(border=True):
+            col1, col2 = st.columns([1, 4])
+            with col1:
+                st.markdown("👤")
+            with col2:
+                st.markdown(f"**{claims.name or 'User'}**")
+                st.caption(f"{permission.name if permission else 'Guest'}")
 
-            if st.button("🚪 Logout", type="primary", use_container_width=True):
+            if st.button("Sign Out", use_container_width=True):
                 auth_guard.logout()
                 st.rerun()
 
-        st.sidebar.markdown("---")
+        st.markdown("---")
 
-        # Navigation
-        page = st.sidebar.radio(
-            "Navigation",
-            ["Chat", "Admin Dashboard"]
-            if permission and permission.name == "ADMIN"
-            else ["Chat"],
+        # Navigation Options
+        options = ["Assistant"]
+
+        if permission:
+            if permission >= PermissionLevel.ANALYST:
+                options.append("Analytics")
+            if permission >= PermissionLevel.ADMIN:
+                options.append("Admin Console")
+
+        selected_page = st.radio("Navigate", options, label_visibility="collapsed")
+
+        st.markdown(
+            '<div style="margin-top: auto; padding-top: 2rem; color: #444; font-size: 0.8rem; text-align: center;">FinOps AI v2.0</div>',
+            unsafe_allow_html=True,
         )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        # Routing
-        if page == "Admin Dashboard":
-            from src.ui.admin import render_admin_dashboard
+    # --------------------------------------------------------------------------
+    #                                ROUTING
+    # --------------------------------------------------------------------------
+    if selected_page == "Assistant":
+        from src.ui.chat import render_chat
 
-            render_admin_dashboard()
-        else:
-            # Main Chat Interface
-            st.title("💬 FinOps Assistant")
-            from src.ui.chat import render_chat
+        render_chat()
 
-            render_chat()
+    elif selected_page == "Analytics":
+        from src.ui.dashboard import render_dashboard
+
+        render_dashboard()
+
+    elif selected_page == "Admin Console":
+        from src.ui.admin import render_admin_dashboard
+
+        render_admin_dashboard()

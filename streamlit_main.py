@@ -7,6 +7,20 @@ from src.ui.pages import render
 from src.database.database import Base, engine
 from src.auth.guard import AuthGuard
 from src.auth.config import ConfigurationError
+from src.ui.styles import get_css
+
+# --------------------------------------------------------------------------
+#                                 CONFIG
+# --------------------------------------------------------------------------
+st.set_page_config(
+    page_title="FinOps AI",
+    page_icon="⚡",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
+# Inject Global CSS
+st.markdown(get_css(), unsafe_allow_html=True)
 
 # Initialize database
 Base.metadata.create_all(engine)
@@ -21,7 +35,7 @@ except ConfigurationError as e:
 if os.getenv("NO_AUTH"):
     st.toast("⚠️ Running in NO_AUTH Mode (Mock Admin)", icon="🛡️")
 
-# Add Logo (New in 1.35+)
+# Add Logo
 st.logo(
     "/home/sean/.gemini/antigravity/brain/28584ee8-5cc9-47b9-900e-3117bed716a2/bhp_mining_logo_dark_1765185101973.png",
     icon_image="/home/sean/.gemini/antigravity/brain/28584ee8-5cc9-47b9-900e-3117bed716a2/bhp_mining_logo_dark_1765185101973.png",

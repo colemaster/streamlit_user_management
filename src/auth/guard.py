@@ -21,6 +21,7 @@ from src.auth.permissions import (
     SESSION_PERMISSION_KEY,
 )
 from src.auth.graph_client import GraphAPIClient
+from src.ui.components import animated_header
 from src.auth.logging import (
     log_auth_event,
     log_auth_failure,
@@ -126,18 +127,29 @@ class AuthGuard:
 
     def render_login_page(self) -> None:
         """Render the login interface."""
-        st.title("FinOps AI Dashboard")
-        st.markdown("### Welcome")
-        st.markdown("Please sign in with your organization account to continue.")
+        # Custom Login UI
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            animated_header("FinOps AI", "Enterprise Cloud Intelligence")
+            st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+            st.markdown("### 👋 Welcome Back")
+            st.markdown(
+                """
+                Please sign in to access your dashboard.
+                
+                Authentication ensures secure access to:
+                - 💰 Real-time cost analytics
+                - 🤖 AI FinOps Assistant
+                - 📊 Budget forecasting
+                """
+            )
+            st.space(1)
 
-        st.info(
-            "**Why sign in?**\n"
-            "This application handles sensitive financial data. "
-            "Authentication ensures you have the correct permissions to view cost reports and budgets."
-        )
-
-        if st.button("Sign in with Microsoft", type="primary"):
-            self.login()
+            if st.button(
+                "🔐 Sign in with Microsoft", type="primary", use_container_width=True
+            ):
+                self.login()
+            st.markdown("</div>", unsafe_allow_html=True)
 
         log_auth_failure("User not logged in")
 

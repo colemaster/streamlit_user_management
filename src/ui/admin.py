@@ -1,184 +1,142 @@
 """
 Admin Dashboard - Streamlit 1.52+
-User access details, Entra ID metrics, and auth logs.
 """
 
 import streamlit as st
-import pandas as pd
+
 from src.auth.claims import extract_user_claims
-from src.auth.permissions import (
-    UserPermission,
-    SESSION_PERMISSION_KEY,
-)
+from src.auth.permissions import UserPermission, SESSION_PERMISSION_KEY
 from src.auth.logging import get_recent_logs
+from src.ui.components import animated_header, render_metric_card, render_status_badge
 
 
 def render_admin_dashboard():
     """Render the Admin Dashboard."""
-    st.title("🛡️ Admin Dashboard")
-    st.space(1)
+    animated_header(
+        "Admin Console", "System status, security log, and identity management"
+    )
 
-    # Tabs for different sections
-    tab1, tab2, tab3 = st.tabs(["👤 User Info", "🔑 Entra ID", "📋 Auth Logs"])
+    # Tabs with custom styling wrapper (implicit via global CSS)
+    tab1, tab2, tab3 = st.tabs(["👤 Identity", "🔐 Entra ID", "📜 Audit Logs"])
 
     with tab1:
         _render_user_info()
-
     with tab2:
         _render_entra_metrics()
-
     with tab3:
         _render_auth_logs()
 
 
 def _render_user_info():
-    """Render current user information."""
-    st.subheader("Current User Information")
-
     claims = extract_user_claims()
     if not claims:
-        st.error("No user claims found.")
+        st.error("No identity context found.")
         return
 
-    col1, col2 = st.columns(2)
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    st.caption("Active Session Context")
 
+    col1, col2 = st.columns([1, 2])
     with col1:
-        with st.container(border=True):
-            st.markdown("#### Identity Claims")
-            st.dataframe(
-                pd.DataFrame(
-                    {
-                        "Field": ["Name", "Email", "OID", "Tenant ID", "Username"],
-                        "Value": [
-                            claims.name or "N/A",
-                            claims.email or "N/A",
-                            claims.oid or "N/A",
-                            claims.tenant_id or "N/A",
-                            claims.preferred_username or "N/A",
-                        ],
-                    }
-                ),
-                use_container_width=True,
-                hide_index=True,
-                column_config={
-                    "Field": st.column_config.TextColumn("Field", width="small"),
-                    "Value": st.column_config.TextColumn("Value", width="large"),
-                },
-            )
+        st.image(
+            "https://ui-avatars.com/api/?name="
+            + (claims.name or "User")
+            + "&background=FF5500&color=fff",
+            width=80,
+        )
+        st.markdown(f"### {claims.name}")
+        st.markdown(f"*{claims.email}*")
+        render_status_badge("active", "Authenticated")
 
     with col2:
-        with st.container(border=True):
-            st.markdown("#### Raw Token Claims")
-            st.caption("Full claims from Identity Provider")
-            if claims.raw_claims:
-                st.json(claims.raw_claims, expanded=False)
-            else:
-                st.warning("No raw claims available.")
+        data = {
+            "Principal ID (OID)": claims.oid,
+            "Tenant ID": claims.tenant_id,
+            "Username": claims.preferred_username,
+            "Issuer": claims.raw_claims.get("iss", "N/A")
+            if claims.raw_claims
+            else "N/A",
+        }
+        for k, v in data.items():
+            st.markdown(f"**{k}:** `{v}`")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    with st.expander("Show Raw JWT Claims"):
+        st.json(claims.raw_claims)
 
 
 def _render_entra_metrics():
-    """Render Entra ID and permissions info."""
-    st.subheader("Entra ID & Permissions")
-
     permission_data = st.session_state.get(SESSION_PERMISSION_KEY)
-
     if not permission_data:
-        st.warning("Permission data not initialized.")
+        st.warning("Permissions not initialized")
         return
 
     user_perm = UserPermission.from_dict(permission_data)
 
-    # Permission level card
-    col1, col2 = st.columns([1, 2])
-
+    col1, col2 = st.columns(2)
     with col1:
-        with st.container(border=True):
-            st.markdown("#### Assigned Permission")
-            st.metric(
-                "Level",
-                user_perm.permission_level.name,
-                delta_arrow="off",
-            )
-            st.badge(
-                "Active",
-                icon="✅",
-            )
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.caption("Access Control")
+        render_metric_card(
+            "Permission Level", user_perm.permission_level.name, None, "neutral"
+        )
+        st.markdown("<br>", unsafe_allow_html=True)
+        render_status_badge("active", "Entra ID Synced")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        with st.container(border=True):
-            st.markdown("#### Group Memberships")
+        st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+        st.caption("Security Group Membership")
 
-            if user_perm.group_oids:
-                st.caption(f"User belongs to {len(user_perm.group_oids)} groups")
-
-                df_groups = pd.DataFrame(user_perm.group_oids, columns=["Group OID"])
-                st.dataframe(
-                    df_groups,
-                    use_container_width=True,
-                    hide_index=True,
-                    height=200,
-                    column_config={
-                        "Group OID": st.column_config.TextColumn(
-                            "Group Object ID",
-                            help="Unique identifier in Entra ID",
-                        )
-                    },
-                )
-            else:
-                st.info("No group memberships found.")
+        if user_perm.group_oids:
+            for group in user_perm.group_oids:
+                st.markdown(f"- `{group}`")
+        else:
+            st.info("No mapped security groups")
+        st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _render_auth_logs():
-    """Render authentication logs."""
-    st.subheader("Authentication Logs")
-    st.caption("Recent authentication events from memory buffer")
+    st.markdown(
+        '<div style="display:flex; justify-content:space-between; align-items:center;"><h3>Security Audit</h3>',
+        unsafe_allow_html=True,
+    )
+    if st.button("🔄 Refresh", key="refresh_logs"):
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    # Filter controls
-    filter_cols = st.columns([2, 1])
+    logs = get_recent_logs(50)
 
-    with filter_cols[0]:
-        log_filter = st.segmented_control(
-            "Filter by Level",
-            ["ALL", "INFO", "WARNING", "ERROR"],
-            default="ALL",
-            selection_mode="single",
+    # Stats
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        render_metric_card("Total Events", str(len(logs)), None, "neutral")
+    with col2:
+        errs = len([l for l in logs if "ERROR" in l])
+        render_metric_card(
+            "Errors",
+            str(errs),
+            "Low" if errs < 5 else "High",
+            "success" if errs == 0 else "error",
+        )
+    with col3:
+        warns = len([l for l in logs if "WARNING" in l])
+        render_metric_card(
+            "Warnings", str(warns), None, "warning" if warns > 0 else "neutral"
         )
 
-    with filter_cols[1]:
-        if st.button("🔄 Refresh Logs", use_container_width=True):
-            st.rerun()
-
-    st.space(1)
-
-    logs = get_recent_logs(100)
-
-    if not logs:
-        st.info("No logs available.")
-        return
-
-    # Filter logs
-    filtered_logs = logs
-    if log_filter and log_filter != "ALL":
-        filtered_logs = [log for log in logs if log_filter in log]
-
-    if not filtered_logs:
-        st.info(f"No logs found for level: {log_filter}")
-        return
-
-    # Display logs in a container
-    with st.container(border=True, height=400):
-        st.code("\n".join(filtered_logs), language="text")
-
-    # Log stats
-    stat_cols = st.columns(4)
-    with stat_cols[0]:
-        st.metric("Total Logs", len(logs), delta_arrow="off")
-    with stat_cols[1]:
-        info_count = len([l for l in logs if "INFO" in l])
-        st.metric("Info", info_count, delta_arrow="off")
-    with stat_cols[2]:
-        warn_count = len([l for l in logs if "WARNING" in l])
-        st.metric("Warnings", warn_count, delta_arrow="off")
-    with stat_cols[3]:
-        error_count = len([l for l in logs if "ERROR" in l])
-        st.metric("Errors", error_count, delta_arrow="off")
+    st.markdown("### Log Stream")
+    with st.container(height=400):
+        for log in logs:
+            color = (
+                "#FF3333"
+                if "ERROR" in log
+                else "#FFB020"
+                if "WARNING" in log
+                else "#00D16C"
+            )
+            st.markdown(
+                f'<div style="border-left: 2px solid {color}; padding-left: 10px; margin-bottom: 4px; font-family: monospace; font-size: 0.85rem; background: rgba(255,255,255,0.03);">{log}</div>',
+                unsafe_allow_html=True,
+            )

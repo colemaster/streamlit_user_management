@@ -10,17 +10,19 @@ def test_login_page_loads():
     if at.error:
         print(f"Streamlit Errors: {[e.value for e in at.error]}")
 
-    # The title is "FinOps AI Dashboard" in src/auth/guard.py
-    assert "FinOps AI Dashboard" in at.title[0].value
-    # Should have a button for Microsoft Login
-    assert at.button[0].label == "Sign in with Microsoft"
+    # The title "FinOps AI" is now in an animated header (HTML/Markdown)
+    # Check for presence in Markdown values
+    assert any("FinOps AI" in md.value for md in at.markdown)
+
+    # Should have a button for Microsoft Login with updated label
+    # We look for the primary button "Sign in with Microsoft"
+    buttons = [b for b in at.button if "Sign in with Microsoft" in b.label]
+    assert len(buttons) > 0
 
 
 def test_chat_interface_structure():
-    """Test that the chat interface structure exists (mocking auth)."""
-    # Note: mocking auth in AppTest is tricky without modifying the app code to accept a mock auth manager.
-    # For now, we verify the file structure and imports via static analysis or unit tests.
-    # This test just checks if we can import the chat module without error.
+    """Test that the chat interface structure exists."""
+    # This test currently just checks importability which is fine
     from src.ui.chat import render_chat
 
     assert callable(render_chat)

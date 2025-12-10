@@ -1,80 +1,103 @@
-# Streamlit User Management System (BHP FinOps Edition)
+# FinOps AI Dashboard
 
-This is a modular and scalable user management system built with **Streamlit**, customized with a **BHP-inspired theme** and a **modern FinOps Chatbot**. It supports **user registration**, **login with JWT authentication**, and a **dashboard interface** with an intelligent chatbot.
+A modern cloud cost intelligence platform built with **Streamlit 1.52+**, featuring **Microsoft Entra ID authentication**, **role-based access control**, and an **AI-powered FinOps assistant**.
 
 ---
 
 ## Project Structure
+
 ```
-streamlit_user_management/
+finops-ai-dashboard/
 │
 ├── src/
-│   ├── auth/                 # Authentication module with Entra ID integration
+│   ├── auth/                     # Authentication module (Entra ID)
+│   │   ├── __init__.py           # Module exports
+│   │   ├── claims.py             # User claims extraction and validation
+│   │   ├── config.py             # Auth configuration and permission levels
+│   │   ├── external.py           # External auth utilities
+│   │   ├── graph_client.py       # Microsoft Graph API client
+│   │   ├── guard.py              # Main authentication guard
+│   │   ├── logging.py            # Authentication event logging
+│   │   ├── msal_guard.py         # Legacy MSAL auth (deprecated)
+│   │   └── permissions.py        # Permission service and level management
+│   │
+│   ├── database/                 # Database layer
 │   │   ├── __init__.py
-│   │   ├── claims.py         # User claims extraction and validation
-│   │   ├── config.py         # Authentication configuration and permission levels
-│   │   ├── graph_client.py   # Microsoft Graph API client for group membership
-│   │   ├── guard.py          # Main authentication guard and flow controller
-│   │   ├── logging.py        # Authentication event logging
-│   │   ├── msal_guard.py     # Legacy MSAL-based authentication (deprecated)
-│   │   └── permissions.py    # Permission service and level management
+│   │   ├── database.py           # SQLite connection and setup
+│   │   └── models.py             # SQLAlchemy models
 │   │
-│   ├── database/
+│   ├── finops/                   # FinOps AI engine
+│   │   ├── data.py               # Mock AWS cost data generator
+│   │   └── engine.py             # AI assistant with streaming responses
+│   │
+│   ├── ui/                       # Streamlit UI components
 │   │   ├── __init__.py
-│   │   ├── database.py       # Database connection and setup
-│   │   └── models.py         # SQLAlchemy models
+│   │   ├── admin.py              # Admin dashboard (user info, logs)
+│   │   ├── chat.py               # AI chat interface
+│   │   ├── components.py         # Reusable UI components
+│   │   ├── dashboard.py          # Cost analytics dashboard
+│   │   ├── managers.py           # Session and state management
+│   │   ├── pages.py              # Application routing
+│   │   ├── services.py           # Backend services
+│   │   └── styles.py             # Custom CSS theming
 │   │
-│   ├── finops/
-│   │   ├── engine.py         # FinOps chatbot logic
-│   │   └── data.py           # Mock data for chatbot
-│   │
-│   ├── ui/
-│   │   ├── __init__.py
-│   │   ├── admin.py          # Admin Dashboard component
-│   │   ├── chat.py           # Chatbot interface logic
-│   │   ├── components.py     # Reusable UI components
-│   │   ├── dashboard.py      # Dashboard interface
-│   │   ├── managers.py       # Session and state management
-│   │   ├── pages.py          # Main application routing and layout
-│   │   ├── services.py       # Backend services used by the UI
-│   │   └── styles.py         # Custom CSS for BHP theme
-│   │
-│   └── settings.py           # Environment configuration and constants
+│   └── settings.py               # Environment configuration
 │
-├── .streamlit/secrets.toml   # Authentication secrets (not committed)
-├── tests/                    # End-to-End tests
-├── streamlit_main.py         # Entry point for the Streamlit app
-├── requirements.txt          # Required Python packages
-├── .gitignore                # Git ignored files
-└── README.md                 # Project documentation
+├── tests/                        # Test suite
+│   ├── test_auth_claims.py       # Property-based tests for claims
+│   ├── test_auth_config.py       # Auth config tests
+│   ├── test_graph_client.py      # Graph API client tests
+│   ├── test_e2e.py               # End-to-end tests
+│   └── test_e2e_mock.py          # E2E tests with mocks
+│
+├── .streamlit/
+│   ├── config.toml               # Streamlit configuration
+│   ├── secrets.toml              # Auth secrets (not committed)
+│   └── secrets.toml.example      # Example secrets template
+│
+├── main.py                       # Application entry point
+├── streamlit_main.py             # Alternative entry point
+├── pyproject.toml                # Python dependencies (uv/pip)
+└── README.md                     # This file
 ```
 
 ---
 
 ## Features
 
-- ✅ **BHP Themed UI**: Modern, clean interface with BHP Orange branding.
-- ✅ **FinOps Chatbot**: Intelligent assistant with streaming responses and "thinking" indicators.
-- ✅ **Admin Dashboard**: View user access, group memberships, and authentication logs.
-- ✅ **Microsoft Entra ID Authentication**: Enterprise SSO with group-based permissions (Streamlit Native Auth).
-- ✅ **Role-Based Access Control**: Map Entra ID groups to application permission levels with Viewer/Analyst/Admin tiers.
-- ✅ **SQLite Database**: Zero-config local development database.
-- ✅ **Token-based Authentication**: JWT token validation and management with automatic logout on token expiration.
-- ✅ **Microsoft Graph API Integration**: Retrieves user's group memberships for permission mapping.
-- ✅ **Event Logging**: Tracks authentication events, failures, and access attempts.
+### Core Functionality
+- **Cloud Cost Dashboard** - Interactive visualizations with Plotly (trend analysis, service distribution, regional heatmaps)
+- **FinOps AI Assistant** - Streaming chat interface with "thinking" indicators and response metrics
+- **Admin Dashboard** - User info, Entra ID metrics, and authentication logs
+
+### Authentication & Security
+- **Microsoft Entra ID** - Enterprise SSO using Streamlit's native OIDC (`st.login`, `st.logout`, `st.user`)
+- **Role-Based Access Control** - Three permission tiers: VIEWER, ANALYST, ADMIN
+- **Microsoft Graph API** - Retrieves group memberships for permission mapping
+- **JWT Token Management** - Automatic expiration handling and session management
+- **Event Logging** - Tracks auth events, failures, and access attempts
+
+### Technical Stack
+- **Streamlit 1.52+** - Modern features: `st.popover`, `st.badge`, `st.segmented_control`, `st.fragment`
+- **Plotly** - Interactive charts and visualizations
+- **SQLAlchemy** - Database ORM with SQLite
+- **Hypothesis** - Property-based testing framework
+- **HTTPX** - Async HTTP client for Graph API
+
+---
 
 ## Architecture
 
 ```mermaid
 graph TD
     User([User]) -->|HTTPS| Streamlit[Streamlit App]
-    Streamlit -->|Auth| EntraID[Microsoft Entra ID]
-    Streamlit -->|Query| GraphAPI[Microsoft Graph API]
-    Streamlit -->|Store| SQLite[(SQLite DB)]
-    Streamlit -->|Chat| FinOpsEngine[FinOps AI Engine]
+    Streamlit -->|OAuth 2.0| EntraID[Microsoft Entra ID]
+    Streamlit -->|REST API| GraphAPI[Microsoft Graph API]
+    Streamlit -->|SQLAlchemy| SQLite[(SQLite DB)]
+    Streamlit -->|Streaming| FinOpsEngine[FinOps AI Engine]
 
     subgraph "Security Layer"
-        AuthGuard[AuthGuard / Streamlit Native Auth]
+        AuthGuard[AuthGuard]
         Claims[Claims Handler]
         Permissions[Permission Service]
         GraphClient[Graph API Client]
@@ -86,207 +109,197 @@ graph TD
     Permissions --> GraphClient
 ```
 
-> [!NOTE]
-> This project uses **Streamlit 1.51+** features like `st.popover`, `st.pills`, and `st.feedback`.
-
-
 ---
 
-## 🔧 Installation & Setup
+## Installation
+
+### Prerequisites
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+
+### Setup
 
 1. **Clone the repository**
-
 ```bash
 git clone https://github.com/mariusciurea/streamlit_user_management.git
 cd streamlit_user_management
 ```
 
-2. **Create a virtual environment**
+2. **Create virtual environment and install dependencies**
 ```bash
+# Using uv (recommended)
+uv sync
+
+# Or using pip
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
+pip install -e .
 ```
 
-3. **Install dependencies**
-
+3. **Configure environment**
 ```bash
-pip install -r requirements.txt
-pip install pytest playwright
-playwright install chromium
+cp src/example.env .env
+cp .streamlit/secrets.toml.example .streamlit/secrets.toml
 ```
 
-4. **Set up environment variables**
+4. **Configure Entra ID** (see [Authentication Setup](#authentication-setup))
 
-Create a `.env` file based on `example.env`:
-
-```bash
-cp example.env .env
-```
-
-5. **Configure Entra ID Authentication**
-
-See the [Authentication Setup](#authentication-setup) section below for detailed instructions.
+---
 
 ## Running the App
 
-Start the Streamlit app with:
-
 ```bash
+# Using uv
+uv run streamlit run streamlit_main.py
+
+# Or directly
 streamlit run streamlit_main.py
 ```
 
 The app will be available at `http://localhost:8501`.
 
+---
+
 ## Running Tests
 
-To run the end-to-end tests:
-
 ```bash
-pytest tests/
+# Run all tests
+uv run pytest tests/
+
+# Run with verbose output
+uv run pytest tests/ -v
+
+# Run specific test file
+uv run pytest tests/test_auth_claims.py
 ```
+
+The test suite includes:
+- **Property-based tests** using Hypothesis for claims extraction, login status, and token expiration
+- **Unit tests** for auth configuration and Graph API client
+- **E2E tests** for full application flows
 
 ---
 
 ## Authentication Setup
 
-## Authentication Setup
-
-This application uses **Microsoft Entra ID (Azure AD)** for enterprise authentication with role-based access control.
+This application uses **Microsoft Entra ID** for enterprise authentication.
 
 <details>
-<summary><b>Click to expand detailed configuration steps</b></summary>
+<summary><b>Click to expand configuration steps</b></summary>
 
-### 1. Register an Application in Entra ID
+### 1. Register Application in Entra ID
 
-1. **Navigate to Azure Portal**
-   - Go to [Azure Portal](https://portal.azure.com)
-   - Navigate to **Microsoft Entra ID** (formerly Azure Active Directory)
+1. Go to [Azure Portal](https://portal.azure.com) → **Microsoft Entra ID** → **App registrations**
+2. Click **New registration**
+3. Configure:
+   - Name: "FinOps AI Dashboard"
+   - Supported account types: **Single tenant**
+   - Redirect URI: `http://localhost:8501/oauth2callback` (Web)
+4. Note the **Application (client) ID** and **Directory (tenant) ID**
 
-2. **Create App Registration**
-   - Click **App registrations** → **New registration**
-   - Enter application name (e.g., "FinOps AI Dashboard")
-   - Select **Accounts in this organizational directory only (Single tenant)**
-   - Set **Redirect URI**:
-     - Platform: **Web**
-     - URI: `http://localhost:8501/oauth2callback` (for local development)
-     - For production, use your deployed URL (e.g., `https://your-app.com/oauth2callback`)
-   - Click **Register**
+### 2. Create Client Secret
 
-3. **Note Your Application IDs**
-   - Copy the **Application (client) ID** - you'll need this for `client_id`
-   - Copy the **Directory (tenant) ID** - you'll need this for `tenant_id`
+1. Go to **Certificates & secrets** → **New client secret**
+2. Copy the secret **Value** immediately (shown only once)
 
-4. **Create Client Secret**
-   - Go to **Certificates & secrets** → **Client secrets** → **New client secret**
-   - Add a description (e.g., "FinOps Dashboard Secret")
-   - Select expiration period (recommended: 24 months)
-   - Click **Add**
-   - **IMPORTANT**: Copy the secret **Value** immediately - you'll need this for `client_secret`
-   - You won't be able to see it again!
+### 3. Configure API Permissions
 
-5. **Configure API Permissions**
-   - Go to **API permissions** → **Add a permission**
-   - Select **Microsoft Graph** → **Delegated permissions**
-   - Add these permissions:
-     - `User.Read` - Read user profile
-     - `GroupMember.Read.All` - Read group memberships
-   - Click **Add permissions**
-   - Click **Grant admin consent** (requires admin privileges)
+1. Go to **API permissions** → **Add a permission** → **Microsoft Graph**
+2. Add delegated permissions:
+   - `User.Read`
+   - `GroupMember.Read.All`
+3. Click **Grant admin consent**
 
-6. **Configure Token Claims (Optional)**
-   - Go to **Token configuration** → **Add optional claim**
-   - Select **ID** token type
-   - Add claims: `email`, `preferred_username`
-   - Click **Add**
+### 4. Get Group Object IDs
 
-### 2. Get Group Object IDs
+1. Go to **Microsoft Entra ID** → **Groups**
+2. Copy the **Object ID** for each group you want to map to permissions
 
-To map Entra ID groups to application permissions, you need the Object IDs (OIDs) of your groups:
-
-1. **Navigate to Groups**
-   - In Azure Portal, go to **Microsoft Entra ID** → **Groups**
-
-2. **Find Your Groups**
-   - Locate the groups you want to use for permissions (e.g., "FinOps Admins", "FinOps Analysts", "FinOps Viewers")
-   - Click on each group
-
-3. **Copy Object IDs**
-   - On the group's **Overview** page, copy the **Object ID**
-   - This is a GUID like `12345678-1234-1234-1234-123456789abc`
-   - Repeat for all groups you want to map
-
-### 3. Configure secrets.toml
-
-Create or update `.streamlit/secrets.toml` with your Entra ID configuration:
+### 5. Configure secrets.toml
 
 ```toml
 [auth]
-# Application credentials from Entra ID app registration
 client_id = "your-application-client-id"
 client_secret = "your-client-secret-value"
 tenant_id = "your-directory-tenant-id"
-
-# Redirect URI (must match what you configured in Entra ID)
 redirect_uri = "http://localhost:8501/"
-
-# Cookie secret for session management (generate a strong random string)
 cookie_secret = "your-strong-random-secret-at-least-32-chars"
-
-# OIDC metadata URL (automatically constructed from tenant_id)
 server_metadata_url = "https://login.microsoftonline.com/{tenant_id}/v2.0/.well-known/openid-configuration"
 
-# Group-to-permission mappings
 [auth.group_mappings]
-"12345678-1234-1234-1234-123456789abc" = "admin"    # Replace with your admin group OID
-"23456789-2345-2345-2345-234567890abc" = "analyst"  # Replace with your analyst group OID
-"34567890-3456-3456-3456-345678901abc" = "viewer"   # Replace with your viewer group OID
+"admin-group-oid" = "admin"
+"analyst-group-oid" = "analyst"
+"viewer-group-oid" = "viewer"
 ```
-
-> [!WARNING]
-> **NEVER commit secrets.toml to version control**. It contains sensitive credentials.
-
-### 4. Group-to-Permission Mapping
-
-The application supports three permission levels:
-
-| Permission Level | Value | Description |
-|-----------------|-------|-------------|
-| **VIEWER** | 1 | Read-only access to dashboards and reports |
-| **ANALYST** | 2 | View and analyze data, run queries |
-| **ADMIN** | 3 | Full access including configuration and user management |
 
 </details>
 
-### Troubleshooting
+### Permission Levels
+
+| Level | Value | Access |
+|-------|-------|--------|
+| VIEWER | 1 | Read-only access to chat assistant |
+| ANALYST | 2 | Dashboard access + data analysis |
+| ADMIN | 3 | Full access including admin dashboard |
+
+---
+
+## Development
+
+### Project Dependencies
+
+Managed via `pyproject.toml`:
+
+**Runtime:**
+- streamlit >= 1.52.1
+- authlib, msal (authentication)
+- httpx (async HTTP)
+- pandas, numpy, plotly (data/viz)
+- sqlalchemy (database)
+- python-jose (JWT)
+- uvloop (event loop)
+- orjson (performance)
+- watchdog (file watching)
+
+**Dev:**
+- pytest
+- hypothesis (property-based testing)
+- pytest-asyncio
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NO_AUTH` | Skip auth for local dev | - |
+| `DEBUG` | Enable debug mode | `False` |
+| `DB_HOST` | Database host | `localhost` |
+| `JWT_SECRET_KEY` | JWT signing key | (change in prod) |
+
+---
+
+## Troubleshooting
 
 <details>
-<summary><b>Common Issues & Fixes</b></summary>
+<summary><b>Common Issues</b></summary>
 
-**"Redirect URI mismatch" error:**
-- Ensure the `redirect_uri` in `secrets.toml` exactly matches what's configured in Entra ID
-- Check for trailing slashes and http vs https
+**"Redirect URI mismatch"**
+- Ensure `redirect_uri` in secrets.toml matches Entra ID exactly (including trailing slash)
 
-**"Insufficient permissions" error:**
-- Verify admin consent was granted for Microsoft Graph API permissions
-- Check that `GroupMember.Read.All` permission is present
+**"Insufficient permissions"**
+- Verify admin consent was granted for Graph API permissions
 
-**User gets VIEWER permission unexpectedly:**
-- Verify the user is actually a member of the expected groups in Entra ID
-- Check that group OIDs in `secrets.toml` are correct (copy-paste from Azure Portal)
-- Ensure group OIDs are strings in quotes
+**User gets VIEWER unexpectedly**
+- Check group OIDs in secrets.toml match Azure Portal
+- Verify user is a member of the expected groups
 
-**Token expiration issues:**
+**Token expiration**
 - Tokens expire after 30 days by default
-- Users will be automatically logged out and prompted to re-authenticate
-- This is normal behavior for security
+- Users are automatically prompted to re-authenticate
 
 </details>
 
 ---
 
-## Scalability
+## License
 
-This app is designed with modularity and scalability in mind. After the user logs in, they are redirected to a dashboard page. 
-This dashboard can easily be extended with custom widgets or components, making it ideal for admin panels, analytics apps, 
-or any Streamlit-based UI that requires user authentication.
+MIT

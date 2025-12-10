@@ -1,144 +1,195 @@
 def get_css():
     return """
 <style>
-    /* Import Google Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+    /* -------------------------------------------------------------------------- */
+    /*                                 VARIABLES                                  */
+    /* -------------------------------------------------------------------------- */
+    :root {
+        /* Color Palette - Dark Premium */
+        --bg-dark: #0A0C0E;
+        --bg-card: #14181C;
+        --bg-card-hover: #1A1F24;
+        --text-primary: #EDEDED;
+        --text-secondary: #A0A5AA;
+        --accent-primary: #FF5500; /* Vibrant Orange */
+        --accent-glow: rgba(255, 85, 0, 0.4);
+        --border-color: #2A3036;
+        --success: #00D16C;
+        --warning: #FFB020;
+        --error: #FF3333;
+        
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        
+        /* Effects */
+        --shadow-card: 0 8px 16px rgba(0, 0, 0, 0.4);
+        --shadow-glow: 0 0 20px var(--accent-glow);
+        --radius-sm: 6px;
+        --radius-md: 12px;
+        --radius-lg: 20px;
+    }
 
-    /* General App Styling */
+    /* -------------------------------------------------------------------------- */
+    /*                                BASE RESETS                                 */
+    /* -------------------------------------------------------------------------- */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
+
     .stApp {
-        font-family: 'Outfit', sans-serif;
-        background-color: #121619;
+        background-color: var(--bg-dark);
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: var(--text-primary) !important;
+    }
+
+    code, pre {
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Hide standard Streamlit header/footer for cleaner look */
+    header[data-testid="stHeader"] {
+        background-color: transparent; 
+        backdrop-filter: blur(10px);
+    }
+    footer { visibility: hidden; }
+    #MainMenu { visibility: hidden; }
+
+    /* -------------------------------------------------------------------------- */
+    /*                                 COMPONENTS                                 */
+    /* -------------------------------------------------------------------------- */
+
+    /* Glass Card Standard */
+    .glass-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-card);
+        padding: var(--spacing-lg);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        backdrop-filter: blur(12px);
     }
     
-    /* Animated Gradient Background for Header (Optional, adds flair) */
-    /*
-    div[data-testid="stHeader"] {
-        background: linear-gradient(90deg, #121619 0%, #1E2226 100%);
-    }
-    */
-
-    /* Card-like Containers with Hover Lift */
-    [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
-        background-color: #1E2226;
-        border: 1px solid #333;
-        border-radius: 12px;
-        padding: 1.25rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(255, 102, 0, 0.15); /* Orange glow */
-        border-color: #FF6600; 
+    .glass-card:hover {
+        transform: translateY(-4px);
+        border-color: var(--accent-primary);
+        box-shadow: var(--shadow-glow), var(--shadow-card);
     }
 
-    /* Chat Message Container */
-    [data-testid="stChatMessage"] {
-        background-color: transparent;
-        border: none;
-        padding: 1rem 0;
-        margin-bottom: 0.5rem;
+    /* Custom Metric Styling within Cards */
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        background: linear-gradient(120deg, #fff, #ccc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
 
-    /* Avatar Styling */
-    [data-testid="stChatMessageAvatarUser"] {
-        background-color: #333;
-        color: #fff;
-        border-radius: 50%;
-        border: 1px solid #444;
-    }
-    [data-testid="stChatMessageAvatarAssistant"] {
-        background-color: #FF6600;
-        color: #000;
-        border-radius: 50%;
-        box-shadow: 0 0 10px rgba(255, 102, 0, 0.4);
+    .metric-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: var(--spacing-xs);
     }
 
-    /* User Message (Right Aligned) */
-    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
-        flex-direction: row-reverse;
-        text-align: right;
-    }
-    
-    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) > div:first-child {
-        background-color: #2D3238;
-        color: #E0E0E0;
-        padding: 1rem 1.5rem;
-        border-radius: 24px 24px 4px 24px;
-        margin-right: 12px;
-        max-width: 75%;
-        text-align: left;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        font-size: 0.95rem;
-        line-height: 1.5;
-        border: 1px solid #444;
-    }
-
-    /* Assistant Message (Left Aligned) */
-    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) > div:first-child {
-        background: linear-gradient(135deg, #FF6600 0%, #E35302 100%);
-        color: #FFFFFF;
-        padding: 1rem 1.5rem;
-        border-radius: 24px 24px 24px 4px;
-        margin-left: 12px;
-        max-width: 75%;
-        box-shadow: 0 2px 5px rgba(255, 102, 0, 0.3);
-        font-size: 0.95rem;
+    .metric-delta {
+        font-size: 0.9rem;
         font-weight: 500;
-        line-height: 1.5;
-    }
-
-    /* Thinking Process Styling */
-    .thinking-box {
-        border-left: 3px solid #FF6600;
-        background-color: #1E2226;
-        padding: 12px;
-        margin-bottom: 16px;
-        border-radius: 0 8px 8px 0;
-        font-size: 0.85em;
-        color: #AAAAAA;
-        font-family: monospace;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
     
-    /* Streamlit Status Container Customization */
-    [data-testid="stStatusWidget"] {
-        background-color: #1E2226;
-        border: 1px solid #444;
-        border-radius: 8px;
+    .delta-up { color: var(--success); }
+    .delta-down { color: var(--error); }
+    .delta-neutral { color: var(--text-secondary); }
+
+    /* Buttons Override */
+    div[data-testid="stButton"] button {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    
+    div[data-testid="stButton"] button:hover {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+        background: var(--bg-card-hover);
     }
 
-    /* Primary Button Pulse Animation */
-    button[kind="primary"] {
-        background: #FF6600 !important;
-        border: none !important;
-        color: #FFFFFF !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
+    div[data-testid="stButton"] button[kind="primary"] {
+        background: var(--accent-primary);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 12px var(--accent-glow);
     }
-    button[kind="primary"]:hover {
+
+    div[data-testid="stButton"] button[kind="primary"]:hover {
+        box-shadow: 0 6px 16px var(--accent-glow);
         transform: scale(1.02);
-        box-shadow: 0 0 15px rgba(255, 102, 0, 0.6);
-    }
-    
-    /* Headers */
-    h1, h2, h3 {
-        color: #FFFFFF !important;
-        font-weight: 700 !important;
-    }
-    h4, h5, h6 {
-        color: #DDDDDD !important;
     }
 
-    /* Input Area Styling */
-    .stChatInputContainer {
-        padding-bottom: 1rem;
+    /* -------------------------------------------------------------------------- */
+    /*                                 ANIMATIONS                                 */
+    /* -------------------------------------------------------------------------- */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Hide default Streamlit elements */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    @keyframes pulse-glow {
+        0% { box-shadow: 0 0 0 0 rgba(255, 85, 0, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(255, 85, 0, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 85, 0, 0); }
+    }
+
+    .animate-enter {
+        animation: fadeIn 0.6s ease-out forwards;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /*                             STREAMLIT OVERRIDES                            */
+    /* -------------------------------------------------------------------------- */
     
+    /* Input Fields */
+    div[data-testid="stTextInput"] input, div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: var(--radius-sm);
+    }
+
+    /* Tabs */
+    button[data-baseweb="tab"] {
+        color: var(--text-secondary);
+        font-weight: 500;
+        background: transparent !important;
+    }
+    
+    button[data-baseweb="tab"][aria-selected="true"] {
+        color: var(--accent-primary) !important;
+        border-bottom: 2px solid var(--accent-primary) !important;
+    }
+    
+    /* Metrics Override */
+    div[data-testid="stMetric"] {
+        background-color: transparent; 
+    }
+
+    /* Sidebar Styling */
+    section[data-testid="stSidebar"] {
+        background-color: #0F1215;
+        border-right: 1px solid var(--border-color);
+    }
 </style>
 """
