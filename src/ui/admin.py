@@ -63,7 +63,86 @@ def _render_user_info():
     st.markdown("</div>", unsafe_allow_html=True)
 
     with st.expander("Show Raw JWT Claims"):
-        st.json(claims.raw_claims)
+        # Create tabs for better organization
+        jwt_tab1, jwt_tab2, jwt_tab3 = st.tabs(["🔍 Claims Viewer", "📋 Claims Summary", "ℹ️ Claims Guide"])
+
+        with jwt_tab1:
+            st.json(claims.raw_claims)
+
+        with jwt_tab2:
+            # Display JWT claims in a more user-friendly format
+            st.markdown("### JWT Claims Summary")
+
+            # Basic user info
+            if claims.raw_claims:
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.markdown("**👤 User Information**")
+                    st.write(f"**Name:** `{claims.raw_claims.get('name', 'N/A')}`")
+                    st.write(f"**Email:** `{claims.raw_claims.get('email', 'N/A')}`")
+                    st.write(f"**Username:** `{claims.raw_claims.get('preferred_username', 'N/A')}`")
+                    st.write(f"**Object ID (OID):** `{claims.raw_claims.get('oid', 'N/A')}`")
+
+                with col2:
+                    st.markdown("**🏢 Organization Info**")
+                    st.write(f"**Tenant ID:** `{claims.raw_claims.get('tid', 'N/A')}`")
+                    st.write(f"**Issuer:** `{claims.raw_claims.get('iss', 'N/A')}`")
+                    st.write(f"**Audience:** `{claims.raw_claims.get('aud', 'N/A')}`")
+
+                    # Show expiration info
+                    exp_timestamp = claims.raw_claims.get('exp')
+                    if exp_timestamp:
+                        from datetime import datetime
+                        exp_datetime = datetime.fromtimestamp(exp_timestamp)
+                        is_expired = exp_datetime < datetime.now()
+                        status = "❌ Expired" if is_expired else "✅ Valid"
+                        st.write(f"**Expiration:** `{exp_datetime.strftime('%Y-%m-%d %H:%M:%S')} UTC` ({status})")
+
+                # Additional claims
+                st.markdown("**🔑 Additional Claims**")
+                additional_claims = {k: v for k, v in claims.raw_claims.items()
+                                    if k not in ['name', 'email', 'preferred_username', 'oid', 'tid', 'iss', 'aud', 'exp']}
+
+                if additional_claims:
+                    for key, value in additional_claims.items():
+                        if key == 'groups' and isinstance(value, list):
+                            st.write(f"**{key}:**")
+                            for group in value[:5]:  # Limit to first 5 groups to avoid long lists
+                                st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;• `{group}`")
+                            if len(value) > 5:
+                                st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;... and {len(value) - 5} more")
+                        elif key == 'roles' and isinstance(value, list):
+                            st.write(f"**{key}:** `{', '.join(value)}`")
+                        else:
+                            st.write(f"**{key}:** `{value}`")
+                else:
+                    st.info("No additional claims found")
+
+        with jwt_tab3:
+            st.markdown("""
+            ### JWT Claims Guide
+
+            A JWT (JSON Web Token) contains the following standard claims:
+
+            | Claim | Description | Example |
+            |-------|-------------|---------|
+            | **`aud`** | Audience - the intended recipient of the token | `api://client-id` |
+            | **`iss`** | Issuer - who issued the token | `https://sts.windows.net/tenant-id/` |
+            | **`sub`** | Subject - identifier for the user | `12345678-1234-1234-1234-123456789abc` |
+            | **`oid`** | Object ID - unique user identifier in Entra ID | `12345678-1234-1234-1234-123456789abc` |
+            | **`tid`** | Tenant ID - organization identifier | `881dcd49-53e3-4f7d-8a74-0a4d2b936183` |
+            | **`name`** | Display name of the user | `John Doe` |
+            | **`email`** | Email address of the user | `john.doe@example.com` |
+            | **`preferred_username`** | Username for display | `john.doe@example.com` |
+            | **`exp`** | Expiration time (Unix timestamp) | `1700003599` |
+            | **`nbf`** | Not before time (Unix timestamp) | `1699999999` |
+            | **`iat`** | Issued at time (Unix timestamp) | `1699999999` |
+            | **`groups`** | List of group OIDs user belongs to | `["group-oid-1", "group-oid-2"]` |
+            | **`roles`** | Application roles assigned to user | `["Admin", "User"]` |
+            | **`ver`** | Version of the token | `1.0` or `2.0` |
+
+            **Security Note:** The `exp` field indicates when the token expires. Tokens should have a reasonable lifetime to balance security and usability.
+            """)
 
 
 def _render_entra_metrics():

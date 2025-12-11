@@ -47,7 +47,7 @@ class FinOpsEngine:
 
         for thought in thoughts:
             # Simulate network/processing latency
-            time.sleep(random.uniform(0.05, 0.1))
+            time.sleep(random.uniform(0.001, 0.005))  # TURBO MODE
             yield ("thinking", thought)
 
         # 2. Determine Response (Simple Keyword Matching)
@@ -65,7 +65,7 @@ class FinOpsEngine:
         for i, word in enumerate(words):
             chunk = word + " "
             # Simulate token generation speed
-            time.sleep(random.uniform(0.005, 0.01))
+            time.sleep(random.uniform(0.001, 0.005))  # TURBO MODE
             yield ("response", chunk)
 
         # 4. Yield Metrics

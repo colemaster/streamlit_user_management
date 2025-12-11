@@ -68,13 +68,14 @@ finops-ai-dashboard/
 ### Core Functionality
 - **Cloud Cost Dashboard** - Interactive visualizations with Plotly (trend analysis, service distribution, regional heatmaps)
 - **FinOps AI Assistant** - Streaming chat interface with "thinking" indicators and response metrics
-- **Admin Dashboard** - User info, Entra ID metrics, and authentication logs
+- **Admin Dashboard** - User info, Entra ID metrics, authentication logs, and enhanced JWT token display
 
 ### Authentication & Security
 - **Microsoft Entra ID** - Enterprise SSO using Streamlit's native OIDC (`st.login`, `st.logout`, `st.user`)
 - **Role-Based Access Control** - Three permission tiers: VIEWER, ANALYST, ADMIN
 - **Microsoft Graph API** - Retrieves group memberships for permission mapping
 - **JWT Token Management** - Automatic expiration handling and session management
+- **Enhanced JWT Visualization** - User-friendly JWT token display with detailed claims breakdown and documentation
 - **Event Logging** - Tracks auth events, failures, and access attempts
 
 ### Technical Stack
@@ -246,6 +247,23 @@ server_metadata_url = "https://login.microsoftonline.com/{tenant_id}/v2.0/.well-
 
 ## Development
 
+### Admin Dashboard & JWT Visualization
+
+The Admin Dashboard includes an enhanced JWT token display with three distinct views:
+
+1. **Claims Viewer** (`🔍`) - Raw JSON display for technical inspection
+2. **Claims Summary** (`📋`) - Organized, user-friendly breakdown of token data
+   - User Information: Name, email, username, Object ID
+   - Organization Info: Tenant ID, issuer, audience, and expiration status
+   - Additional Claims: Groups, roles, and other attributes with smart formatting
+3. **Claims Guide** (`ℹ️`) - Comprehensive documentation explaining each JWT claim type
+
+**Key Features:**
+- Automatic expiration checking with visual indicators (✅ Valid / ❌ Expired)
+- Smart array handling for groups and roles
+- Readable timestamp conversion from Unix format
+- Detailed documentation table for understanding JWT standards
+
 ### Project Dependencies
 
 Managed via `pyproject.toml`:
@@ -295,6 +313,12 @@ Managed via `pyproject.toml`:
 **Token expiration**
 - Tokens expire after 30 days by default
 - Users are automatically prompted to re-authenticate
+
+**JWT Display Issues**
+- Enhanced JWT visualization available in Admin Dashboard
+- Use the Claims Summary tab for user-friendly token information
+- Check expiration status in the Organization Info section
+- For technical details, use the Claims Viewer tab to see raw JSON
 
 </details>
 

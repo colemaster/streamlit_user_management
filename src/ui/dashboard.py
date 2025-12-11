@@ -21,9 +21,8 @@ def render_dashboard():
         return
 
     # Initialize Data
-    if "cost_data" not in st.session_state:
-        st.session_state.cost_data = generate_mock_data()
-    df = st.session_state.cost_data
+    # usage of st.cache_data handles persistence; no need for manual session state check
+    df = generate_mock_data()
 
     # 1. Header Section
     col1, col2 = st.columns([5, 1])
@@ -34,7 +33,7 @@ def render_dashboard():
     with col2:
         st.write("")  # Spacer
         if st.button("🔄 Refresh Data", type="secondary", use_container_width=True):
-            st.session_state.cost_data = generate_mock_data()
+            generate_mock_data.clear()
             st.rerun()
 
     # 2. Filters (Glass Look)

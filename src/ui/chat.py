@@ -9,6 +9,7 @@ from src.auth.config import PermissionLevel
 from src.ui.components import animated_header
 
 
+@st.fragment
 def render_chat():
     """Render the modern chat interface."""
     current_permission = get_current_permission()

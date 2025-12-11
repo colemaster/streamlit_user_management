@@ -1,11 +1,8 @@
-[theme]
-base = "dark"
-primaryColor = "#FF6600"
-backgroundColor = "#121619"
-secondaryBackgroundColor = "#1E2226"
-textColor = "#FFFFFF"
-font = "sans serif"
+[server]
+enableCORS = false
+enableXsrfProtection = true
+headless = true
+enableWebsocketCompression = true
 
-[client]
-toolbarMode = "minimal"
-showSidebarNavigation = false
+[browser]
+gatherUsageStats = false
