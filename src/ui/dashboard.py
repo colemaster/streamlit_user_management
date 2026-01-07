@@ -52,7 +52,7 @@ def render_dashboard():
                 "Region", ["All Regions"] + list(df["Region"].unique())
             )
         with f_col3:
-            date_range = st.date_input(
+            date_range = st.datetime_input(
                 "Date Range", (df["Date"].min(), df["Date"].max())
             )
         st.markdown("</div>", unsafe_allow_html=True)

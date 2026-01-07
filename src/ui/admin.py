@@ -48,6 +48,15 @@ def _render_user_info():
         st.markdown(f"*{claims.email}*")
         render_status_badge("active", "Authenticated")
 
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button(
+            "🔄 Refresh Access Token",
+            use_container_width=True,
+            help="Re-triggers OIDC login flow to refresh tokens",
+        ):
+            st.toast("Re-authenticating...", icon="🔒")
+            st.login()
+
     with col2:
         data = {
             "Principal ID (OID)": claims.oid,
@@ -56,6 +65,7 @@ def _render_user_info():
             "Issuer": claims.raw_claims.get("iss", "N/A")
             if claims.raw_claims
             else "N/A",
+            "Authenticated via": "Native Streamlit OIDC",
         }
         for k, v in data.items():
             st.markdown(f"**{k}:** `{v}`")
@@ -64,7 +74,9 @@ def _render_user_info():
 
     with st.expander("Show Raw JWT Claims"):
         # Create tabs for better organization
-        jwt_tab1, jwt_tab2, jwt_tab3 = st.tabs(["🔍 Claims Viewer", "📋 Claims Summary", "ℹ️ Claims Guide"])
+        jwt_tab1, jwt_tab2, jwt_tab3 = st.tabs(
+            ["🔍 Claims Viewer", "📋 Claims Summary", "ℹ️ Claims Guide"]
+        )
 
         with jwt_tab1:
             st.json(claims.raw_claims)
@@ -80,8 +92,12 @@ def _render_user_info():
                     st.markdown("**👤 User Information**")
                     st.write(f"**Name:** `{claims.raw_claims.get('name', 'N/A')}`")
                     st.write(f"**Email:** `{claims.raw_claims.get('email', 'N/A')}`")
-                    st.write(f"**Username:** `{claims.raw_claims.get('preferred_username', 'N/A')}`")
-                    st.write(f"**Object ID (OID):** `{claims.raw_claims.get('oid', 'N/A')}`")
+                    st.write(
+                        f"**Username:** `{claims.raw_claims.get('preferred_username', 'N/A')}`"
+                    )
+                    st.write(
+                        f"**Object ID (OID):** `{claims.raw_claims.get('oid', 'N/A')}`"
+                    )
 
                 with col2:
                     st.markdown("**🏢 Organization Info**")
@@ -90,28 +106,57 @@ def _render_user_info():
                     st.write(f"**Audience:** `{claims.raw_claims.get('aud', 'N/A')}`")
 
                     # Show expiration info
-                    exp_timestamp = claims.raw_claims.get('exp')
+                    exp_timestamp = claims.raw_claims.get("exp")
                     if exp_timestamp:
                         from datetime import datetime
+
                         exp_datetime = datetime.fromtimestamp(exp_timestamp)
                         is_expired = exp_datetime < datetime.now()
                         status = "❌ Expired" if is_expired else "✅ Valid"
-                        st.write(f"**Expiration:** `{exp_datetime.strftime('%Y-%m-%d %H:%M:%S')} UTC` ({status})")
+                        st.write(
+                            f"**Expiration:** `{exp_datetime.strftime('%Y-%m-%d %H:%M:%S')} UTC` ({status})"
+                        )
+
+                # Raw Tokens (Nightly Feature)
+                if claims.access_token:
+                    st.markdown("**🎫 Raw Tokens**")
+                    with st.expander("Show Access Token"):
+                        st.code(claims.access_token, wrap_lines=True)
+                        st.caption(
+                            "⚠️ Never share this token. It allows acting on your behalf."
+                        )
 
                 # Additional claims
                 st.markdown("**🔑 Additional Claims**")
-                additional_claims = {k: v for k, v in claims.raw_claims.items()
-                                    if k not in ['name', 'email', 'preferred_username', 'oid', 'tid', 'iss', 'aud', 'exp']}
+                additional_claims = {
+                    k: v
+                    for k, v in claims.raw_claims.items()
+                    if k
+                    not in [
+                        "name",
+                        "email",
+                        "preferred_username",
+                        "oid",
+                        "tid",
+                        "iss",
+                        "aud",
+                        "exp",
+                    ]
+                }
 
                 if additional_claims:
                     for key, value in additional_claims.items():
-                        if key == 'groups' and isinstance(value, list):
+                        if key == "groups" and isinstance(value, list):
                             st.write(f"**{key}:**")
-                            for group in value[:5]:  # Limit to first 5 groups to avoid long lists
+                            for group in value[
+                                :5
+                            ]:  # Limit to first 5 groups to avoid long lists
                                 st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;• `{group}`")
                             if len(value) > 5:
-                                st.write(f"&nbsp;&nbsp;&nbsp;&nbsp;... and {len(value) - 5} more")
-                        elif key == 'roles' and isinstance(value, list):
+                                st.write(
+                                    f"&nbsp;&nbsp;&nbsp;&nbsp;... and {len(value) - 5} more"
+                                )
+                        elif key == "roles" and isinstance(value, list):
                             st.write(f"**{key}:** `{', '.join(value)}`")
                         else:
                             st.write(f"**{key}:** `{value}`")
@@ -192,7 +237,7 @@ def _render_auth_logs():
     with col1:
         render_metric_card("Total Events", str(len(logs)), None, "neutral")
     with col2:
-        errs = len([l for l in logs if "ERROR" in l])
+        errs = len([log_entry for log_entry in logs if "ERROR" in log_entry])
         render_metric_card(
             "Errors",
             str(errs),
@@ -200,7 +245,7 @@ def _render_auth_logs():
             "success" if errs == 0 else "error",
         )
     with col3:
-        warns = len([l for l in logs if "WARNING" in l])
+        warns = len([log_entry for log_entry in logs if "WARNING" in log_entry])
         render_metric_card(
             "Warnings", str(warns), None, "warning" if warns > 0 else "neutral"
         )

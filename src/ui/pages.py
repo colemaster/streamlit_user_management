@@ -8,7 +8,7 @@ from src.auth.permissions import get_current_permission, PermissionLevel
 
 def render(auth_guard: AuthGuard):
     """
-    Render the main application navigation and routing.
+    Render the main application navigation and routing using st.navigation.
     """
     claims = extract_user_claims()
     if not claims:
@@ -18,11 +18,10 @@ def render(auth_guard: AuthGuard):
     permission = get_current_permission()
 
     # --------------------------------------------------------------------------
-    #                                SIDEBAR
+    #                                SIDEBAR PROFILE
     # --------------------------------------------------------------------------
     with st.sidebar:
         st.markdown('<div style="padding: 1rem 0;">', unsafe_allow_html=True)
-
         # User Profile
         with st.container(border=True):
             col1, col2 = st.columns([1, 4])
@@ -35,40 +34,35 @@ def render(auth_guard: AuthGuard):
             if st.button("Sign Out", use_container_width=True):
                 auth_guard.logout()
                 st.rerun()
-
-        st.markdown("---")
-
-        # Navigation Options
-        options = ["Assistant"]
-
-        if permission:
-            if permission >= PermissionLevel.ANALYST:
-                options.append("Analytics")
-            if permission >= PermissionLevel.ADMIN:
-                options.append("Admin Console")
-
-        selected_page = st.radio("Navigate", options, label_visibility="collapsed")
-
-        st.markdown(
-            '<div style="margin-top: auto; padding-top: 2rem; color: #444; font-size: 0.8rem; text-align: center;">FinOps AI v2.0</div>',
-            unsafe_allow_html=True,
-        )
         st.markdown("</div>", unsafe_allow_html=True)
 
     # --------------------------------------------------------------------------
-    #                                ROUTING
+    #                                PAGES SETUP
     # --------------------------------------------------------------------------
-    if selected_page == "Assistant":
-        from src.ui.chat import render_chat
+    from src.ui.chat import render_chat
+    from src.ui.dashboard import render_dashboard
+    from src.ui.admin import render_admin_dashboard
 
-        render_chat()
+    # Define pages
+    pages = [st.Page(render_chat, title="Assistant", icon="🤖", default=True)]
 
-    elif selected_page == "Analytics":
-        from src.ui.dashboard import render_dashboard
+    if permission:
+        if permission >= PermissionLevel.ANALYST:
+            pages.append(st.Page(render_dashboard, title="Analytics", icon="📈"))
+        if permission >= PermissionLevel.ADMIN:
+            pages.append(
+                st.Page(render_admin_dashboard, title="Admin Console", icon="🛡️")
+            )
 
-        render_dashboard()
+    # Render navigation
+    pg = st.navigation(pages)
 
-    elif selected_page == "Admin Console":
-        from src.ui.admin import render_admin_dashboard
+    # Custom footer in sidebar
+    with st.sidebar:
+        st.markdown(
+            '<div style="margin-top: auto; padding-top: 2rem; color: #444; font-size: 0.8rem; text-align: center;">FinOps AI v2.1</div>',
+            unsafe_allow_html=True,
+        )
 
-        render_admin_dashboard()
+    # Run the selected page
+    pg.run()

@@ -24,28 +24,36 @@ class UserClaims:
     access_token: Optional[str] = None  # Raw Access Token (if available)
 
     @classmethod
-    def from_st_user(cls, st_user: dict) -> "UserClaims":
+    def from_st_user(cls, st_user: Any) -> "UserClaims":
         """
-        Extract claims from st.user dict.
+        Extract claims from st.user.
 
         Streamlit's native auth populates st.user with claims from the ID Token.
-        We extract the standard OIDC claims here.
+        In streamlit-nightly (and newer), st.user.tokens provides access to
+        the raw ID and Access tokens if configured.
 
         Args:
-            st_user: Dictionary containing user claims from Streamlit
+            st_user: st.user object from Streamlit
 
         Returns:
             UserClaims instance with extracted values
         """
+        # Dictionary-like access for claims
+        claims_dict = dict(st_user) if hasattr(st_user, "items") else {}
+
+        # Access tokens from st.user.tokens (new in nightly)
+        tokens = getattr(st_user, "tokens", {})
+        access_token = tokens.get("access") if hasattr(tokens, "get") else None
+
         return cls(
-            oid=st_user.get("oid", ""),  # Object ID (Unique User ID)
-            email=st_user.get("email", ""),
-            name=st_user.get("name", ""),
-            preferred_username=st_user.get("preferred_username", ""),
-            tenant_id=st_user.get("tid", ""),  # Tenant ID
-            exp=st_user.get("exp"),  # Expiration Timestamp
-            raw_claims=st_user,  # Store the full raw dictionary
-            access_token=st_user.get("access_token"),  # Extract access token if present
+            oid=claims_dict.get("oid", ""),  # Object ID (Unique User ID)
+            email=claims_dict.get("email", ""),
+            name=claims_dict.get("name", ""),
+            preferred_username=claims_dict.get("preferred_username", ""),
+            tenant_id=claims_dict.get("tid", ""),  # Tenant ID
+            exp=claims_dict.get("exp"),  # Expiration Timestamp
+            raw_claims=claims_dict,  # Store the full raw dictionary
+            access_token=access_token or claims_dict.get("access_token"),
         )
 
     def is_expired(self) -> bool:

@@ -2,6 +2,11 @@
 
 A modern cloud cost intelligence platform built with **Streamlit 1.52+**, featuring **Microsoft Entra ID authentication**, **role-based access control**, and an **AI-powered FinOps assistant**.
 
+![Python](https://img.shields.io/badge/Python-3.11%2B-blue?style=for-the-badge&logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-Nightly-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+![Azure AD](https://img.shields.io/badge/Azure%20AD-Enabled-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
+
 ---
 
 ## Project Structure
@@ -79,11 +84,26 @@ finops-ai-dashboard/
 - **Event Logging** - Tracks auth events, failures, and access attempts
 
 ### Technical Stack
-- **Streamlit 1.52+** - Modern features: `st.popover`, `st.badge`, `st.segmented_control`, `st.fragment`
+- **Streamlit Nightly (1.52.3.dev+)** - Enhanced authentication with `st.user.tokens` support
+- **Token Exposure & Refresh** - Native access to ID/Access tokens for downstream API reuse
 - **Plotly** - Interactive charts and visualizations
 - **SQLAlchemy** - Database ORM with SQLite
 - **Hypothesis** - Property-based testing framework
-- **HTTPX** - Async HTTP client for Graph API
+- **HTTPX** - Async HTTP client for Graph API and downstream service calls
+
+---
+
+## Token Management
+
+This project leverages the latest **Streamlit Nightly** features for secure token handling.
+
+> [!IMPORTANT]
+> Raw tokens are sensitive. Ensure `expose_tokens` is only enabled when downstream API access is required.
+
+See [TOKENS.md](TOKENS.md) for a deep dive into:
+- Configuring token exposure
+- On-Behalf-Of flows for backend APIs
+- Token refresh mechanisms using `st.login()`
 
 ---
 

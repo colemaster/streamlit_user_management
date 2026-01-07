@@ -110,52 +110,66 @@ def render_chat():
                 )  # Clear float
 
     # Input Area
-    prompt = st.chat_input("Ask about your AWS/Azure spend...", key="chat_input")
+    chat_input = st.chat_input(
+        "Ask about your AWS/Azure spend...", key="chat_input", accept_audio=True
+    )
 
-    if prompt:
-        # Add user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with chat_container:
-            st.markdown(
-                f'<div class="user-bubble">{prompt}</div>', unsafe_allow_html=True
-            )
+    if chat_input:
+        prompt = None
+        if hasattr(chat_input, "text") and chat_input.text:
+            prompt = chat_input.text
+        elif isinstance(chat_input, str):
+            prompt = chat_input
 
-        # Generate response
-        response_placeholder = st.empty()
-        thought_placeholder = st.empty()
+        if hasattr(chat_input, "audio") and chat_input.audio:
+            st.toast("🎙️ Audio input received (Simulated Processing)", icon="🔊")
+            # In a real app, we'd send this to a STT service
+            if not prompt:
+                prompt = "Analyze my cloud spend from this recording."
 
-        full_response = ""
-        full_thought = ""
-
-        # Fake streaming visualization since the engine generator yields chunks
-        # Adapt this loop based on actual engine.py yield structure
-        for msg_type, content in st.session_state.engine.generate_response(prompt):
-            if msg_type == "thinking":
-                full_thought += content + "\n"
-                if show_thought:
-                    thought_placeholder.markdown(
-                        f'<div class="thought-bubble">Thinking... {len(full_thought)} chars</div>',
-                        unsafe_allow_html=True,
-                    )
-            elif msg_type == "response":
-                full_response += content
-                response_placeholder.markdown(
-                    f'<div class="bot-bubble">{full_response}▌</div>',
-                    unsafe_allow_html=True,
+        if prompt:
+            # Add user message
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with chat_container:
+                st.markdown(
+                    f'<div class="user-bubble">{prompt}</div>', unsafe_allow_html=True
                 )
 
-        # Finalize
-        if show_thought:
-            thought_placeholder.empty()  # Clear the temp thinking bubble
+            # Generate response
+            response_placeholder = st.empty()
+            thought_placeholder = st.empty()
 
-        response_placeholder.markdown(
-            f'<div class="bot-bubble">{full_response}</div>', unsafe_allow_html=True
-        )
+            full_response = ""
+            full_thought = ""
 
-        st.session_state.messages.append(
-            {"role": "assistant", "content": full_response, "thought": full_thought}
-        )
-        st.rerun()
+            # Fake streaming visualization since the engine generator yields chunks
+            for msg_type, content in st.session_state.engine.generate_response(prompt):
+                if msg_type == "thinking":
+                    full_thought += content + "\n"
+                    if show_thought:
+                        thought_placeholder.markdown(
+                            f'<div class="thought-bubble">Thinking... {len(full_thought)} chars</div>',
+                            unsafe_allow_html=True,
+                        )
+                elif msg_type == "response":
+                    full_response += content
+                    response_placeholder.markdown(
+                        f'<div class="bot-bubble">{full_response}▌</div>',
+                        unsafe_allow_html=True,
+                    )
+
+            # Finalize
+            if show_thought:
+                thought_placeholder.empty()
+
+            response_placeholder.markdown(
+                f'<div class="bot-bubble">{full_response}</div>', unsafe_allow_html=True
+            )
+
+            st.session_state.messages.append(
+                {"role": "assistant", "content": full_response, "thought": full_thought}
+            )
+            st.rerun()
 
 
 def _render_empty_state():

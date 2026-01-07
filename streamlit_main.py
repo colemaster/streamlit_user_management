@@ -39,6 +39,7 @@ if os.getenv("NO_AUTH"):
 st.logo(
     "/home/sean/.gemini/antigravity/brain/28584ee8-5cc9-47b9-900e-3117bed716a2/bhp_mining_logo_dark_1765185101973.png",
     icon_image="/home/sean/.gemini/antigravity/brain/28584ee8-5cc9-47b9-900e-3117bed716a2/bhp_mining_logo_dark_1765185101973.png",
+    size="large",
 )
 
 # Check authentication before rendering pages
