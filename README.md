@@ -19,7 +19,7 @@ finops-ai-dashboard/
 │   │   ├── __init__.py           # Module exports
 │   │   ├── claims.py             # User claims extraction and validation
 │   │   ├── config.py             # Auth configuration and permission levels
-│   │   ├── external.py           # External auth utilities
+│   │   ├── external.py           # External API connectivity & token reuse
 │   │   ├── graph_client.py       # Microsoft Graph API client
 │   │   ├── guard.py              # Main authentication guard
 │   │   ├── logging.py            # Authentication event logging
@@ -41,9 +41,9 @@ finops-ai-dashboard/
 │   │   ├── chat.py               # AI chat interface
 │   │   ├── components.py         # Reusable UI components
 │   │   ├── dashboard.py          # Cost analytics dashboard
-│   │   ├── managers.py           # Session and state management
+│   │   ├── managers.py           # AuthManager (Cookie/Session mediation)
 │   │   ├── pages.py              # Application routing
-│   │   ├── services.py           # Backend services
+│   │   ├── services.py           # AuthService (Registration, Login, JWT)
 │   │   └── styles.py             # Custom CSS theming
 │   │
 │   └── settings.py               # Environment configuration
@@ -77,6 +77,8 @@ finops-ai-dashboard/
 
 ### Authentication & Security
 - **Microsoft Entra ID** - Enterprise SSO using Streamlit's native OIDC (`st.login`, `st.logout`, `st.user`)
+- **Custom Authentication** - Email/Password login with JWT tokens and secure password hashing
+- **Session Persistence** - `streamlit-cookies-controller` ensures users stay logged in across reloads
 - **Role-Based Access Control** - Three permission tiers: VIEWER, ANALYST, ADMIN
 - **Microsoft Graph API** - Retrieves group memberships for permission mapping
 - **JWT Token Management** - Automatic expiration handling and session management
@@ -85,11 +87,13 @@ finops-ai-dashboard/
 
 ### Technical Stack
 - **Streamlit Nightly (1.52.3.dev+)** - Enhanced authentication with `st.user.tokens` support
+- **Performance** - `uvloop` (event loop) and `orjson` (JSON parsing) for high throughput
 - **Token Exposure & Refresh** - Native access to ID/Access tokens for downstream API reuse
 - **Plotly** - Interactive charts and visualizations
 - **SQLAlchemy** - Database ORM with SQLite
 - **Hypothesis** - Property-based testing framework
 - **HTTPX** - Async HTTP client for Graph API and downstream service calls
+- **Watchdog** - Filesystem monitoring for auto-reloads
 
 ---
 
@@ -118,13 +122,15 @@ graph TD
     Streamlit -->|Streaming| FinOpsEngine[FinOps AI Engine]
 
     subgraph "Security Layer"
+        AuthManager[AuthManager]
         AuthGuard[AuthGuard]
         Claims[Claims Handler]
         Permissions[Permission Service]
         GraphClient[Graph API Client]
     end
 
-    Streamlit --> AuthGuard
+    Streamlit --> AuthManager
+    AuthManager --> AuthGuard
     AuthGuard --> Claims
     AuthGuard --> Permissions
     Permissions --> GraphClient
@@ -203,7 +209,7 @@ The test suite includes:
 
 ## Authentication Setup
 
-This application uses **Microsoft Entra ID** for enterprise authentication.
+This application uses **Microsoft Entra ID** for enterprise authentication and supports a custom auth flow.
 
 <details>
 <summary><b>Click to expand configuration steps</b></summary>
@@ -290,6 +296,7 @@ Managed via `pyproject.toml`:
 
 **Runtime:**
 - streamlit >= 1.52.1
+- streamlit-cookies-controller (auth persistence)
 - authlib, msal (authentication)
 - httpx (async HTTP)
 - pandas, numpy, plotly (data/viz)
