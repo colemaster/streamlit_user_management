@@ -42,19 +42,29 @@ def render_status_badge(status: str, label: str):
     """
     Renders a status badge.
     """
-    colors = {
+    status_lower = status.lower()
+    class_map = {
+        "active": "status-active",
+        "inactive": "status-inactive",
+        "warning": "status-warning",
+        "error": "status-error",
+    }
+    css_class = class_map.get(status_lower, "status-inactive")
+
+    # Dot color matching
+    color_map = {
         "active": "#00D16C",
         "inactive": "#A0A5AA",
         "warning": "#FFB020",
         "error": "#FF3333",
     }
-    color = colors.get(status.lower(), "#A0A5AA")
+    dot_color = color_map.get(status_lower, "#A0A5AA")
 
     st.markdown(
         f"""
-    <div style="display: inline-flex; align-items: center; background: {color}20; padding: 4px 12px; border-radius: 20px; border: 1px solid {color}40;">
-        <span style="width: 8px; height: 8px; border-radius: 50%; background: {color}; margin-right: 8px; box-shadow: 0 0 8px {color};"></span>
-        <span style="color: {color}; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.05em;">{label.upper()}</span>
+    <div class="status-badge {css_class}">
+        <span style="width: 8px; height: 8px; border-radius: 50%; background: {dot_color}; margin-right: 8px; box-shadow: 0 0 6px {dot_color};"></span>
+        <span>{label.upper()}</span>
     </div>
     """,
         unsafe_allow_html=True,

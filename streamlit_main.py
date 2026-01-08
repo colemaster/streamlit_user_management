@@ -9,18 +9,31 @@ from src.auth.guard import AuthGuard
 from src.auth.config import ConfigurationError
 from src.ui.styles import get_css
 
+
 # --------------------------------------------------------------------------
 #                                 CONFIG
 # --------------------------------------------------------------------------
-st.set_page_config(
-    page_title="FinOps AI",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
+def setup():
+    st.set_page_config(
+        page_title="BHP FinOps Intelligence",
+        page_icon="💸",
+        layout="wide",
+        initial_sidebar_state="expanded",
+    )
 
-# Inject Global CSS
-st.markdown(get_css(), unsafe_allow_html=True)
+    # Nightly Feature: Global Logo
+    st.logo(
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/BHP_2017_logo.svg/800px-BHP_2017_logo.svg.png",
+        link="https://bhp.com",
+        icon_image="https://upload.wikimedia.org/wikipedia/commons/thumb/1/13/BHP_2017_logo.svg/800px-BHP_2017_logo.svg.png",
+    )
+
+    # Inject Global CSS
+    st.markdown(get_css(), unsafe_allow_html=True)
+
+
+# Call the setup function
+setup()
 
 # Initialize database
 Base.metadata.create_all(engine)

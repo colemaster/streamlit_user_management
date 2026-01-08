@@ -169,6 +169,11 @@ def render_chat():
             st.session_state.messages.append(
                 {"role": "assistant", "content": full_response, "thought": full_thought}
             )
+
+            # Nightly Feature: User Feedback
+            with chat_container:
+                st.feedback("thumbs", key=f"feedback_{len(st.session_state.messages)}")
+
             st.rerun()
 
 

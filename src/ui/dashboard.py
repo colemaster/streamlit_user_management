@@ -44,8 +44,12 @@ def render_dashboard():
         )
         f_col1, f_col2, f_col3 = st.columns(3)
         with f_col1:
-            selected_service = st.selectbox(
-                "Service", ["All Services"] + list(df["Service"].unique())
+            # Nightly Feature: Pills for filtering
+            selected_service = st.pills(
+                "Service",
+                ["All Services"] + list(df["Service"].unique()),
+                default="All Services",
+                selection_mode="single",
             )
         with f_col2:
             selected_region = st.selectbox(

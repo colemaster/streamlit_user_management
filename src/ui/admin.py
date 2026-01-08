@@ -7,7 +7,7 @@ import streamlit as st
 from src.auth.claims import extract_user_claims
 from src.auth.permissions import UserPermission, SESSION_PERMISSION_KEY
 from src.auth.logging import get_recent_logs
-from src.ui.components import animated_header, render_metric_card, render_status_badge
+from src.ui.components import animated_header, render_metric_card
 
 
 def render_admin_dashboard():
@@ -46,7 +46,7 @@ def _render_user_info():
         )
         st.markdown(f"### {claims.name}")
         st.markdown(f"*{claims.email}*")
-        render_status_badge("active", "Authenticated")
+        st.badge("Authenticated", color="green", icon=":material/lock:")
 
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button(
@@ -206,7 +206,7 @@ def _render_entra_metrics():
             "Permission Level", user_perm.permission_level.name, None, "neutral"
         )
         st.markdown("<br>", unsafe_allow_html=True)
-        render_status_badge("active", "Entra ID Synced")
+        st.badge("Entra ID Synced", color="green", icon=":material/sync:")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
