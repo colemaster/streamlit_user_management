@@ -1,12 +1,14 @@
 """Handles routing and layout rendering with Entra ID authentication"""
 
 import streamlit as st
+from typing import Optional
 from src.auth.guard import AuthGuard
+from src.auth.enhanced_auth import EnhancedAuthHandler
 from src.auth.claims import extract_user_claims
 from src.auth.permissions import get_current_permission, PermissionLevel
 
 
-def render(auth_guard: AuthGuard):
+def render(auth_guard: AuthGuard, enhanced_auth: Optional[EnhancedAuthHandler] = None):
     """
     Render the main application navigation and routing using st.navigation.
     """
@@ -31,9 +33,15 @@ def render(auth_guard: AuthGuard):
                 st.markdown(f"**{claims.name or 'User'}**")
                 st.caption(f"{permission.name if permission else 'Guest'}")
 
-            if st.button("Sign Out", use_container_width=True):
-                auth_guard.logout()
-                st.rerun()
+            # Enhanced logout with confirmation dialog
+            if enhanced_auth:
+                if st.button("Sign Out", use_container_width=True):
+                    enhanced_auth.secure_logout_with_confirmation()
+            else:
+                # Fallback to standard logout
+                if st.button("Sign Out", use_container_width=True):
+                    auth_guard.logout()
+                    st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
     # --------------------------------------------------------------------------

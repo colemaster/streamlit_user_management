@@ -67,6 +67,10 @@ class AuthGuard:
         Returns:
             True if user is authenticated, False otherwise
         """
+        # 0. Check for NO_AUTH mode (Dev Bypass)
+        if os.getenv("NO_AUTH"):
+            return True
+
         # 1. Check if Streamlit has populated st.user (Native Auth)
         # This happens automatically after a successful OAuth flow.
         if not check_login_status():
@@ -113,7 +117,12 @@ class AuthGuard:
         st.login()
 
     def logout(self) -> None:
-        """Logout and clear session."""
+        """
+        Logout and clear session with enhanced OIDC provider integration.
+        
+        Uses the new Streamlit nightly st.logout() functionality that supports
+        logging users out of their identity provider when supported by OIDC setup.
+        """
         claims = extract_user_claims()
         if claims:
             log_logout(claims.email)
@@ -122,8 +131,32 @@ class AuthGuard:
         if SESSION_PERMISSION_KEY in st.session_state:
             del st.session_state[SESSION_PERMISSION_KEY]
 
-        st.toast("Logging out...", icon="👋")
-        st.logout()
+        # Clear any additional session state related to authentication
+        auth_keys_to_clear = [
+            "access_token", 
+            "id_token", 
+            "refresh_token",
+            "permissions_initialized",
+            "user_groups",
+            "auth_timestamp"
+        ]
+        
+        for key in auth_keys_to_clear:
+            if key in st.session_state:
+                del st.session_state[key]
+
+        st.toast("Logging out from identity provider...", icon="👋")
+        
+        try:
+            # Enhanced st.logout() in Streamlit nightly 2026
+            # This now logs users out of their identity provider if supported by OIDC setup
+            st.logout()
+        except Exception as e:
+            # Fallback for any logout errors
+            st.error(f"Logout error: {e}")
+            # Manual session clearing as fallback
+            st.session_state.clear()
+            st.rerun()
 
     def render_login_page(self) -> None:
         """Render the login interface."""

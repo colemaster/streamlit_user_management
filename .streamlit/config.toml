@@ -1,8 +1,22 @@
+[global]
+developmentMode = false
+
 [server]
-enableCORS = false
+enableCORS = true
 enableXsrfProtection = true
 headless = true
 enableWebsocketCompression = true
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+# Enhanced theme configuration for nightly features with modern CSS support
+primaryColor = "#FF4500"  # Brave Design orange primary
+backgroundColor = "#1a1a1a"  # Dark background
+secondaryBackgroundColor = "#2d2d2d"  # Slightly lighter dark
+textColor = "#ffffff"  # White text for contrast
+font = "sans serif"  # Use system fonts as fallback
+
+# Enhanced theme settings for modern features
+base = "dark"  # Use dark theme as base

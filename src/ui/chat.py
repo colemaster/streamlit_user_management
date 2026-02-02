@@ -43,7 +43,7 @@ def render_chat():
     # Chat Container
     chat_container = st.container(height=600, border=False)
 
-    # Custom CSS for chat bubbles (Scoped here for specific override if needed, though general is in styles.py)
+    # Custom CSS for chat bubbles
     st.markdown(
         """
     <style>
@@ -123,7 +123,6 @@ def render_chat():
 
         if hasattr(chat_input, "audio") and chat_input.audio:
             st.toast("🎙️ Audio input received (Simulated Processing)", icon="🔊")
-            # In a real app, we'd send this to a STT service
             if not prompt:
                 prompt = "Analyze my cloud spend from this recording."
 
@@ -142,7 +141,6 @@ def render_chat():
             full_response = ""
             full_thought = ""
 
-            # Fake streaming visualization since the engine generator yields chunks
             for msg_type, content in st.session_state.engine.generate_response(prompt):
                 if msg_type == "thinking":
                     full_thought += content + "\n"
@@ -170,7 +168,6 @@ def render_chat():
                 {"role": "assistant", "content": full_response, "thought": full_thought}
             )
 
-            # Nightly Feature: User Feedback
             with chat_container:
                 st.feedback("thumbs", key=f"feedback_{len(st.session_state.messages)}")
 

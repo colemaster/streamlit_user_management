@@ -122,16 +122,48 @@ class MSALAuthGuard:
             log_auth_failure(str(e))
             return False
 
-    def logout(self):
-        """Logout the user."""
-        if "access_token" in st.session_state:
-            del st.session_state["access_token"]
-        if "id_token" in st.session_state:
-            del st.session_state["id_token"]
+    def logout(self) -> None:
+        """
+        Logout the user with enhanced OIDC provider integration.
+        
+        Uses the new Streamlit nightly st.logout() functionality that supports
+        logging users out of their identity provider when supported by OIDC setup.
+        """
+        # Log the logout event
+        claims = st.session_state.get("id_token", {})
+        email = claims.get("preferred_username") or claims.get("email")
+        if email:
+            log_logout(email)
+        
+        # Clear MSAL-specific session state
+        msal_keys_to_clear = [
+            "access_token", 
+            "id_token", 
+            "refresh_token",
+            "token_expires_at",
+            "msal_account"
+        ]
+        
+        for key in msal_keys_to_clear:
+            if key in st.session_state:
+                del st.session_state[key]
+        
+        # Clear permission cache
         if SESSION_PERMISSION_KEY in st.session_state:
             del st.session_state[SESSION_PERMISSION_KEY]
 
-        st.rerun()
+        st.toast("Logging out from identity provider...", icon="👋")
+        
+        try:
+            # Enhanced st.logout() in Streamlit nightly 2026
+            # This now logs users out of their identity provider if supported by OIDC setup
+            st.logout()
+        except Exception as e:
+            # Fallback for any logout errors
+            st.error(f"Logout error: {e}")
+            # Manual session clearing and rerun as fallback
+            st.session_state.clear()
+            st.rerun()
 
     async def initialize_user_permission(self) -> Optional[UserPermission]:
         """Initialize permissions."""

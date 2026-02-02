@@ -7,6 +7,7 @@ Manages Entra ID authentication configuration loaded from Streamlit secrets.
 from dataclasses import dataclass, field
 from typing import Dict
 from enum import IntEnum
+import streamlit as st
 
 
 class PermissionLevel(IntEnum):
@@ -124,7 +125,11 @@ def build_metadata_url(tenant_id: str) -> str:
 
 def load_auth_config() -> AuthConfig:
     """
-    Load and validate authentication configuration from Streamlit secrets.
+    Load and validate authentication configuration from Streamlit secrets
+    with session-scoped caching.
+    
+    Uses Streamlit nightly 2026 session-scoped caching to avoid
+    repeated configuration loading within the same session.
     
     Returns:
         Validated AuthConfig instance
@@ -132,6 +137,12 @@ def load_auth_config() -> AuthConfig:
     Raises:
         ConfigurationError: If configuration is missing or invalid
     """
+    return _load_auth_config_cached()
+
+
+@st.cache_data(scope="session", ttl=3600, show_spinner="Loading auth configuration...")
+def _load_auth_config_cached() -> AuthConfig:
+    """Internal cached implementation of auth config loading."""
     try:
         import streamlit as st
         config = AuthConfig.from_secrets(dict(st.secrets))
@@ -141,3 +152,30 @@ def load_auth_config() -> AuthConfig:
         if isinstance(e, ConfigurationError):
             raise
         raise ConfigurationError(f"Failed to load authentication configuration: {e}")
+
+
+@st.cache_data(scope="session", ttl=1800, show_spinner="Loading group mappings...")
+def get_group_mappings() -> Dict[str, PermissionLevel]:
+    """
+    Get group to permission mappings with session-scoped caching.
+    
+    Returns:
+        Dictionary mapping group OIDs to permission levels
+    """
+    config = load_auth_config()
+    return config.group_mappings
+
+
+def clear_auth_cache():
+    """Clear all authentication-related caches."""
+    _load_auth_config_cached.clear()
+    get_group_mappings.clear()
+
+
+def refresh_auth_configuration():
+    """Refresh all authentication configuration from secrets."""
+    clear_auth_cache()
+    
+    # Pre-load fresh configuration
+    load_auth_config()
+    get_group_mappings()
